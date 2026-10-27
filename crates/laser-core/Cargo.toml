@@ -1,0 +1,15 @@
+[package]
+name = "laser-core"
+description = "Core types for Open Laser Studio: units, errors, safety state machine, laser sources, machine profiles"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+[lints]
+workspace = true
