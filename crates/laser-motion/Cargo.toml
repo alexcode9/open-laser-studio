@@ -1,0 +1,21 @@
+[package]
+name = "laser-motion"
+description = "Toolpath generation and motion planning (flat, indexed cylindrical, coupled)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+laser-core.workspace = true
+laser-geometry.workspace = true
+laser-gcode.workspace = true
+laser-project.workspace = true
+serde.workspace = true
+image.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
+
+[lints]
+workspace = true
