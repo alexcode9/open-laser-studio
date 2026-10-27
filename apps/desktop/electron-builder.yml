@@ -1,0 +1,37 @@
+appId: org.openlaserstudio.desktop
+productName: Open Laser Studio
+copyright: Copyright © Open Laser Studio contributors
+directories:
+  output: release/${version}
+  buildResources: build
+# Main/preload/renderer are fully bundled by electron-vite (workspace packages and zod are
+# inlined), so no node_modules are needed at runtime.
+files:
+  - out/**
+  - package.json
+  - '!**/node_modules/**'
+  - '!**/*.map'
+extraResources:
+  # Loaded by electron/main/native.ts from `process.resourcesPath/native/laser_node.node`.
+  - from: native/laser_node.node
+    to: native/laser_node.node
+asar: true
+npmRebuild: false
+electronLanguages: [en-US]
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  artifactName: ${productName}-${version}-win-${arch}.${ext}
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+mac:
+  target: [dmg]
+  category: public.app-category.graphics-design
+  hardenedRuntime: true
+linux:
+  target: [AppImage]
+  category: Graphics
+publish: null
