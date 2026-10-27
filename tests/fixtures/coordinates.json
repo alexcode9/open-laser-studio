@@ -1,0 +1,57 @@
+{
+  "description": "Shared cylinder coordinate fixtures. Consumed by crates/laser-geometry/tests/fixtures.rs and packages/geometry-adapters/src/cylinder.test.ts. Values are derived by hand from the spec formulas: A = A0 + sign * s / (PI * D) * 360, U = U0 + u.",
+  "tolerance": 1e-6,
+  "cases": [
+    {
+      "name": "spec example: 94.2478 mm wraps once around a 30 mm cylinder",
+      "spec": { "diameterMm": 30, "lengthMm": 200, "angularZeroDeg": 0, "axialZeroMm": 0, "rotationSign": 1 },
+      "surface": { "u": 0, "s": 94.24777960769379 },
+      "machine": { "aDeg": 360, "uMm": 0 }
+    },
+    {
+      "name": "origin",
+      "spec": { "diameterMm": 30, "lengthMm": 200, "angularZeroDeg": 0, "axialZeroMm": 0, "rotationSign": 1 },
+      "surface": { "u": 0, "s": 0 },
+      "machine": { "aDeg": 0, "uMm": 0 }
+    },
+    {
+      "name": "quarter turn negative",
+      "spec": { "diameterMm": 30, "lengthMm": 200, "angularZeroDeg": 0, "axialZeroMm": 0, "rotationSign": 1 },
+      "surface": { "u": 12.5, "s": -23.561944901923447 },
+      "machine": { "aDeg": -90, "uMm": 12.5 }
+    },
+    {
+      "name": "multi-revolution (two wraps)",
+      "spec": { "diameterMm": 30, "lengthMm": 200, "angularZeroDeg": 0, "axialZeroMm": 0, "rotationSign": 1 },
+      "surface": { "u": 100, "s": 188.49555921538757 },
+      "machine": { "aDeg": 720, "uMm": 100 }
+    },
+    {
+      "name": "reversed rotation sign",
+      "spec": { "diameterMm": 30, "lengthMm": 200, "angularZeroDeg": 0, "axialZeroMm": 0, "rotationSign": -1 },
+      "surface": { "u": 0, "s": 23.561944901923447 },
+      "machine": { "aDeg": -90, "uMm": 0 }
+    },
+    {
+      "name": "angular and axial zero offsets",
+      "spec": { "diameterMm": 60, "lengthMm": 150, "angularZeroDeg": 10, "axialZeroMm": 25, "rotationSign": 1 },
+      "surface": { "u": 10, "s": 47.12388980384690 },
+      "machine": { "aDeg": 100, "uMm": 35 }
+    },
+    {
+      "name": "seam: just below one circumference",
+      "spec": { "diameterMm": 30, "lengthMm": 200, "angularZeroDeg": 0, "axialZeroMm": 0, "rotationSign": 1 },
+      "surface": { "u": 0, "s": 94.24777860769379 },
+      "machine": { "aDeg": 359.99999618028136, "uMm": 0 }
+    }
+  ],
+  "galvo": [
+    { "diameterMm": 30, "dsMm": 0, "offsetMm": 0, "focusErrorMm": 0 },
+    { "diameterMm": 30, "dsMm": 23.561944901923447, "offsetMm": 15, "focusErrorMm": 15 },
+    { "diameterMm": 30, "dsMm": 5, "offsetMm": 4.907920451942283, "focusErrorMm": 0.8256458052789345 }
+  ],
+  "wrap": [
+    { "diameterMm": 30, "sMm": 100, "rev": 1, "sWrapped": 5.75222039230621 },
+    { "diameterMm": 30, "sMm": -10, "rev": -1, "sWrapped": 84.24777960769379 }
+  ]
+}

@@ -1,0 +1,16 @@
+[package]
+name = "laser-geometry"
+description = "Vector geometry and cylindrical transforms for Open Laser Studio"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+laser-core.workspace = true
+serde.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
+
+[lints]
+workspace = true
