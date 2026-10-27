@@ -1,0 +1,12 @@
+{
+  "description": "OLS axis protocol v1 golden frames. Shared by crates/laser-protocol/tests/axis_fixtures.rs and firmware/esp32-motion-controller/test/host/test_main.c (copied there as C literals; keep in sync).",
+  "crcCheck": { "input": "123456789", "crc": "29B1" },
+  "frames": [
+    { "line": "@7:MOVE:A=90.0000,U=12.5000*F291", "seq": 7, "kind": "MOVE" },
+    { "line": "@1:HELLO:proto=1*99F3", "seq": 1, "kind": "HELLO" },
+    { "line": "@3:ACC*BDD7", "seq": 3, "kind": "ACC" },
+    { "line": "@3:CMP:A=1.0000,U=2.0000*95DB", "seq": 3, "kind": "CMP" },
+    { "line": "@0:FLT:code=ESTOP,msg=button*A0C0", "seq": 0, "kind": "FLT" },
+    { "line": "@5:ST:state=IDLE,A=0.0000,U=37.0000,homed=0,en=1*AF94", "seq": 5, "kind": "ST" }
+  ]
+}
