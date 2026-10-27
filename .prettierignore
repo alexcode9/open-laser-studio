@@ -1,0 +1,9 @@
+target
+node_modules
+out
+dist
+release
+pnpm-lock.yaml
+base-design-spec.md
+firmware
+*.ols

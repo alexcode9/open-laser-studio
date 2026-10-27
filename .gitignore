@@ -1,0 +1,14 @@
+node_modules/
+target/
+dist/
+out/
+release/
+*.node
+.vite/
+coverage/
+test-results/
+playwright-report/
+*.log
+.DS_Store
+Thumbs.db
+apps/desktop/native/

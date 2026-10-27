@@ -1,0 +1,21 @@
+Open Laser Studio
+Copyright (c) 2026 Open Laser Studio contributors
+
+Protocol knowledge attribution
+------------------------------
+
+The xTool F1 legacy transport in crates/laser-protocol is an independent Rust
+implementation. Its port numbers, session command sequence, laser-source
+commands and power scale were learned from:
+
+  BeamInk — https://github.com/sfn-tools/BeamInk
+  Copyright (c) 2026 something.fromnothing.blog - Tools
+  MIT License
+
+No BeamInk source code is included in this repository.
+
+Firmware-family information (V1 REST vs WS-V2) was learned from the protocol
+notes of ha-xtool (https://github.com/thecodingdad/ha-xtool). No code is included.
+
+xTool, xTool F1 and LightBurn are trademarks of their respective owners.
+Open Laser Studio is not affiliated with or endorsed by them.
