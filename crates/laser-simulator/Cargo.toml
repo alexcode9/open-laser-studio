@@ -1,0 +1,19 @@
+[package]
+name = "laser-simulator"
+description = "Deterministic machine simulator: virtual F1, virtual axis controller, timeline"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+laser-core.workspace = true
+laser-geometry.workspace = true
+laser-gcode.workspace = true
+laser-motion.workspace = true
+laser-project.workspace = true
+laser-protocol.workspace = true
+serde.workspace = true
+tracing.workspace = true
+
+[lints]
+workspace = true

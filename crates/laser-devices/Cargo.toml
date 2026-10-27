@@ -1,0 +1,21 @@
+[package]
+name = "laser-devices"
+description = "Device abstraction: F1 (real + simulated), external axis controller, composite machine"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+laser-core.workspace = true
+laser-gcode.workspace = true
+laser-protocol.workspace = true
+laser-simulator.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+laser-project.workspace = true
+
+[lints]
+workspace = true
