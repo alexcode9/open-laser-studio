@@ -1,0 +1,109 @@
+@import 'tailwindcss';
+
+@source '../../../packages/ui/src';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: #fff;
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --font-sans: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Cascadia Mono', Consolas, monospace;
+}
+
+:root {
+  --background: #f4f5f7;
+  --foreground: #14161a;
+  --card: #ffffff;
+  --popover: #ffffff;
+  --primary: #f97316;
+  --primary-foreground: #fff;
+  --secondary: #e4e6ea;
+  --muted: #eceef1;
+  --muted-foreground: #5d6470;
+  --accent: #e2e5ea;
+  --destructive: #dc2626;
+  --border: #d5d9df;
+  --input: #c9ced6;
+  --ring: #f97316;
+  --canvas-bg: #e9ebee;
+  --canvas-work: #ffffff;
+  --canvas-grid: rgba(20, 22, 26, 0.07);
+  --canvas-grid-major: rgba(20, 22, 26, 0.16);
+}
+
+.dark {
+  --background: #0b0d10;
+  --foreground: #e6e8eb;
+  --card: #12151a;
+  --popover: #161a20;
+  --primary: #f97316;
+  --primary-foreground: #fff;
+  --secondary: #1f242c;
+  --muted: #171b21;
+  --muted-foreground: #8a929e;
+  --accent: #232931;
+  --destructive: #dc2626;
+  --border: #252b33;
+  --input: #2c333d;
+  --ring: #f97316;
+  --canvas-bg: #0e1115;
+  --canvas-work: #151a20;
+  --canvas-grid: rgba(255, 255, 255, 0.05);
+  --canvas-grid-major: rgba(255, 255, 255, 0.11);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+input,
+textarea,
+select {
+  user-select: text;
+}
+
+* {
+  border-color: var(--border);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--input);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
