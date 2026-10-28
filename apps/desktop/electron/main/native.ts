@@ -3,6 +3,8 @@ import { createRequire } from 'node:module';
 import { join } from 'node:path';
 
 import type {
+  CadAlignParams,
+  CadAlignResult,
   ImportedPath,
   JobLogEntry,
   MeshBuffers,
@@ -18,7 +20,14 @@ import type {
 } from '@ols/shared-types';
 
 /** Must equal `laser_core::NATIVE_API_VERSION`. */
-export const EXPECTED_NATIVE_API_VERSION = 1;
+export const EXPECTED_NATIVE_API_VERSION = 2;
+
+/** A CAD source file stored in the .ols container (`path` = `cad/<sha256>.<ext>`). */
+export interface NativeCadFile {
+  path: string;
+  sha256: string;
+  data: Buffer;
+}
 
 export interface NativeSimSession {
   setProject(project: Project): void;
@@ -53,8 +62,9 @@ export interface NativeModule {
   cylinderMesh(spec: unknown, toleranceMm: number, axialSegments: number): MeshBuffers;
   importSvg(svg: string): ImportedPath[];
   textToPath(text: string, fontSizeMm: number, fontFamily: string): PathCmd[];
-  saveOls(project: Project, thumbnailPng: Buffer | null): Buffer;
-  loadOls(data: Buffer): { project: Project; thumbnailPng: Buffer | null };
+  saveOls(project: Project, thumbnailPng: Buffer | null, cadFiles: NativeCadFile[]): Buffer;
+  loadOls(data: Buffer): { project: Project; thumbnailPng: Buffer | null; cadFiles: NativeCadFile[]; warnings: string[] };
+  cadAlignToRotary(params: CadAlignParams): CadAlignResult;
   analyzeGcode(text: string, dialect: string): unknown;
   planToolpath(project: Project, signal?: AbortSignal): Promise<PlanResult>;
   kinematicPreview(project: Project, sampleDt: number, signal?: AbortSignal): Promise<TimelineBuffers>;

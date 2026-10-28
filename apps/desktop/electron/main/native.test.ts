@@ -1,10 +1,12 @@
 // Contract tests between the Rust core (via the built napi module) and the TypeScript side.
 // Skipped when the native module has not been built (`pnpm build:native`).
-import { existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
+import { transformPoint } from '@ols/cad-kernel';
 import { InputSchemas, ProjectSchema } from '@ols/ipc-contracts';
-import type { Project, SessionSnapshot } from '@ols/shared-types';
+import type { CadAlignParams, Project, SessionSnapshot, Vec3 } from '@ols/shared-types';
 import { describe, expect, it } from 'vitest';
 
 import { loadNative, type NativeModule, type NativeSimSession } from './native';
@@ -20,8 +22,8 @@ function runUntil(s: NativeSimSession, pred: (x: SessionSnapshot) => boolean, ma
 }
 
 describe.skipIf(!available)('native core contract', () => {
-  it('reports API version 1', () => {
-    expect(native().nativeInfo().apiVersion).toBe(1);
+  it('reports API version 2', () => {
+    expect(native().nativeInfo().apiVersion).toBe(2);
   });
 
   it('sample project passes the IPC schema and survives normalize + .ols roundtrip', () => {
@@ -30,10 +32,70 @@ describe.skipIf(!available)('native core contract', () => {
     const parsed = ProjectSchema.safeParse(p);
     expect(parsed.success, JSON.stringify(parsed.error?.issues.slice(0, 3))).toBe(true);
     expect(n.normalizeProject(p)).toEqual(p);
-    const { project } = n.loadOls(n.saveOls(p, null));
+    const { project } = n.loadOls(n.saveOls(p, null, []));
     expect(project).toEqual(p);
     const flat: Project = { ...p, mode: 'flat' };
     expect(ProjectSchema.safeParse(n.normalizeProject(flat)).success).toBe(true);
+  });
+
+  it('CAD alignment matches the shared fixture when applied as a column-major Mat4', () => {
+    const fx = JSON.parse(readFileSync(fileURLToPath(new URL('../../../../tests/fixtures/cad_alignment.json', import.meta.url)), 'utf8')) as {
+      tolerance: number;
+      cases: { name: string; params: CadAlignParams; lengthMm: number; points: { model: Vec3; workpiece: Vec3 }[] }[];
+    };
+    for (const c of fx.cases) {
+      expect(InputSchemas['cad:alignToRotary'].safeParse(c.params).success, c.name).toBe(true);
+      const r = native().cadAlignToRotary(c.params);
+      expect(r.modelToWorkpiece).toHaveLength(16);
+      expect(Math.abs(r.lengthMm - c.lengthMm)).toBeLessThan(fx.tolerance);
+      for (const p of c.points) {
+        const got = transformPoint(r.modelToWorkpiece, p.model);
+        const back = transformPoint(r.workpieceToModel, p.workpiece);
+        for (let i = 0; i < 3; i++) {
+          expect(Math.abs(got[i]! - p.workpiece[i]!), `${c.name} ${p.model}`).toBeLessThan(fx.tolerance);
+          expect(Math.abs(back[i]! - p.model[i]!)).toBeLessThan(fx.tolerance);
+        }
+      }
+    }
+    expect(() => native().cadAlignToRotary({ ...fx.cases[0]!.params, axisDirection: [0, 0, 0] })).toThrow(/INVALID_ARGUMENT/);
+  });
+
+  it('CAD workspace survives the .ols roundtrip with its embedded source file', () => {
+    const n = native();
+    const step = Buffer.from(readFileSync(fileURLToPath(new URL('../../../../tests/fixtures/cad/a-cylinder-30x150.step', import.meta.url))));
+    const sha = createHash('sha256').update(step).digest('hex');
+    const id = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+    const p: Project = {
+      ...n.sampleProject(),
+      cad: {
+        models: [
+          {
+            id: 'm1', name: 'cyl', fileName: 'a.step', sourceType: 'step', declaredUnit: 'millimetre', unitScaleToMm: 1, unitsConfirmed: true,
+            sha256: sha, byteLength: step.length, assetPath: '', geometryRevision: 'rev', kernelVersion: 'k', deflectionMm: 0.06,
+            sourceToModel: id, modelToWorkpiece: id, hiddenParts: [],
+          },
+        ],
+        measurements: [
+          {
+            id: 'meas-1', kind: 'diameter', value: 30, unit: 'mm', quality: 'analytical', tolerance: 0, label: 'Ø 30.000 mm', anchors: [[0, 15, 75]],
+            references: [{ modelId: 'm1', geometryRevision: 'rev', kind: 'face', index: 0, point: null, onFace: null, signature: 'cyl:r15' }],
+            details: { radiusMm: 15, note: 'x', exact: true, extra: null }, persistent: true, stale: false,
+          },
+        ],
+        activeWorkpiece: null,
+        displayUnit: 'mm',
+        displayPrecision: 3,
+      },
+    };
+    expect(ProjectSchema.safeParse(p).success).toBe(true);
+    const loaded = n.loadOls(n.saveOls(p, null, [{ path: 'x', sha256: sha, data: step }]));
+    expect(loaded.warnings).toEqual([]);
+    expect(loaded.cadFiles).toHaveLength(1);
+    expect(Buffer.compare(loaded.cadFiles[0]!.data, step)).toBe(0);
+    expect(loaded.project.cad!.models[0]!.assetPath).toBe(`cad/${sha}.step`);
+    expect(loaded.project.cad!.measurements).toEqual(p.cad!.measurements);
+    expect(loaded.project.schemaVersion).toBe(2);
+    expect(() => n.saveOls(p, null, [])).toThrow(/not provided/);
   });
 
   it('mesh request schema accepts what the renderer sends', () => {

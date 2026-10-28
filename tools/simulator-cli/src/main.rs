@@ -60,7 +60,7 @@ fn load(args: &Args) -> Result<Project, String> {
     let mut p = match &args.project {
         Some(path) => {
             let bytes = std::fs::read(path).map_err(|e| format!("{path}: {e}"))?;
-            load_ols(&bytes).map_err(|e| format!("{path}: {e}"))?.0
+            load_ols(&bytes).map_err(|e| format!("{path}: {e}"))?.project
         }
         None => sample_project(),
     };

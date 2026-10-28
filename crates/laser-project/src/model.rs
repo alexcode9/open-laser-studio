@@ -246,6 +246,9 @@ pub struct Project {
     pub machine: MachineProfile,
     /// Asset id -> data URL. Stored as separate files inside `.ols`.
     pub assets: BTreeMap<String, String>,
+    /// Imported CAD models, measurements and the CAD-derived workpiece (schema v2).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cad: Option<crate::cad::CadWorkspace>,
 }
 
 impl Default for Project {
@@ -259,6 +262,7 @@ impl Default for Project {
             cylinder: CylinderJobSettings::default(),
             machine: MachineProfile::default(),
             assets: BTreeMap::new(),
+            cad: None,
         }
     }
 }

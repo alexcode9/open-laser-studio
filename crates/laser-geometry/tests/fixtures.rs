@@ -46,3 +46,34 @@ fn galvo_and_wrap_cases() {
         assert!((sw - f(w, "sWrapped")).abs() < tol);
     }
 }
+
+fn vec3(v: &Value) -> [f64; 3] {
+    let a = v.as_array().expect("vec3");
+    [a[0].as_f64().expect("x"), a[1].as_f64().expect("y"), a[2].as_f64().expect("z")]
+}
+
+/// `tests/fixtures/cad_alignment.json`: CAD axis -> rotary workpiece frame.
+#[test]
+fn cad_alignment_cases() {
+    let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../../tests/fixtures/cad_alignment.json");
+    let fx: Value = serde_json::from_str(&std::fs::read_to_string(path).expect("fixture file")).expect("valid json");
+    let tol = f(&fx, "tolerance");
+    for case in fx["cases"].as_array().expect("cases") {
+        let name = case["name"].as_str().unwrap_or_default();
+        let params: laser_geometry::AlignParams = serde_json::from_value(case["params"].clone()).expect("params");
+        let r = laser_geometry::align_axis_to_rotary(&params).expect("aligns");
+        assert!((r.length_mm - f(case, "lengthMm")).abs() < tol, "{name}: length");
+        let seam = vec3(&case["seamDirection"]);
+        assert!((0..3).all(|i| (r.seam_direction[i] - seam[i]).abs() < tol), "{name}: seam {:?}", r.seam_direction);
+        for p in case["points"].as_array().expect("points") {
+            let (model, wp) = (vec3(&p["model"]), vec3(&p["workpiece"]));
+            let got = r.model_to_workpiece.transform_point(model);
+            assert!((0..3).all(|i| (got[i] - wp[i]).abs() < tol), "{name}: {model:?} -> {got:?}, expected {wp:?}");
+            let back = r.workpiece_to_model.transform_point(wp);
+            assert!((0..3).all(|i| (back[i] - model[i]).abs() < tol), "{name}: inverse {back:?}");
+        }
+        // Serialised layout is the column-major array the renderer hands to three.js.
+        let json = serde_json::to_value(&r).expect("serialise");
+        assert_eq!(json["modelToWorkpiece"].as_array().map(Vec::len), Some(16));
+    }
+}

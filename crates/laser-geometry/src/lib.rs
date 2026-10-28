@@ -3,12 +3,14 @@
 pub mod affine;
 pub mod bounds;
 pub mod cylinder;
+pub mod frame3;
 pub mod path;
 pub mod shapes;
 
 pub use affine::Affine2;
 pub use bounds::Bounds;
 pub use cylinder::{CylinderMesh, CylinderTransform, WorldPoint};
+pub use frame3::{AlignParams, AlignResult, Mat4, align_axis_to_rotary};
 pub use path::{PathCmd, Polyline, flatten};
 
 #[derive(Debug, Clone, Copy, PartialEq, Default, serde::Serialize, serde::Deserialize)]

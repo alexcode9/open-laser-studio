@@ -99,6 +99,13 @@ pub fn cylinder_mesh(spec: Value, tolerance_mm: f64, axial_segments: u32) -> nap
     })
 }
 
+/// Rigid transform taking a CAD cylinder axis to the rotary workpiece frame (Rust owns it).
+#[napi]
+pub fn cad_align_to_rotary(params: Value) -> napi::Result<Value> {
+    let p: laser_geometry::AlignParams = from_value(params, "alignment")?;
+    to_value(&laser_geometry::align_axis_to_rotary(&p).map_err(err)?)
+}
+
 #[napi(object)]
 pub struct MachineAu {
     pub a_deg: f64,
@@ -137,10 +144,20 @@ pub fn text_to_path(text: String, font_size_mm: f64, font_family: String) -> nap
     to_value(&laser_project::text_to_path(&text, font_size_mm, &font_family).map_err(err)?)
 }
 
+/// CAD source file stored in the `.ols` container.
+#[napi(object)]
+pub struct OlsCadFile {
+    pub path: String,
+    pub sha256: String,
+    pub data: Buffer,
+}
+
 #[napi]
-pub fn save_ols(project: Value, thumbnail_png: Option<Buffer>) -> napi::Result<Buffer> {
+pub fn save_ols(project: Value, thumbnail_png: Option<Buffer>, cad_files: Vec<OlsCadFile>) -> napi::Result<Buffer> {
     let p: Project = from_value(project, "project")?;
-    let bytes = laser_project::save_ols(&p, thumbnail_png.as_deref()).map_err(err)?;
+    let files: Vec<laser_project::CadFile> =
+        cad_files.into_iter().map(|f| laser_project::CadFile { path: f.path, sha256: f.sha256, data: f.data.to_vec() }).collect();
+    let bytes = laser_project::save_ols(&p, thumbnail_png.as_deref(), &files).map_err(err)?;
     Ok(bytes.into())
 }
 
@@ -148,12 +165,19 @@ pub fn save_ols(project: Value, thumbnail_png: Option<Buffer>) -> napi::Result<B
 pub struct LoadedProject {
     pub project: Value,
     pub thumbnail_png: Option<Buffer>,
+    pub cad_files: Vec<OlsCadFile>,
+    pub warnings: Vec<String>,
 }
 
 #[napi]
 pub fn load_ols(data: Buffer) -> napi::Result<LoadedProject> {
-    let (p, thumb) = laser_project::load_ols(&data).map_err(err)?;
-    Ok(LoadedProject { project: to_value(&p)?, thumbnail_png: thumb.map(Into::into) })
+    let loaded = laser_project::load_ols(&data).map_err(err)?;
+    Ok(LoadedProject {
+        project: to_value(&loaded.project)?,
+        thumbnail_png: loaded.thumbnail_png.map(Into::into),
+        cad_files: loaded.cad_files.into_iter().map(|f| OlsCadFile { path: f.path, sha256: f.sha256, data: f.data.into() }).collect(),
+        warnings: loaded.warnings,
+    })
 }
 
 #[napi]

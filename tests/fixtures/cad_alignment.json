@@ -1,0 +1,62 @@
+{
+  "description": "CAD model -> rotary workpiece alignment fixtures. Consumed by crates/laser-geometry/tests/fixtures.rs (computes modelToWorkpiece) and packages/cad-kernel/src/alignment.test.ts (applies a column-major Mat4 the way the renderer does). Workpiece frame = cylinder local frame: X axial with u = 0 at the cylinder start, seam (s = 0) on +Y, s towards +Z. Expected values follow from the construction X = axis, Y = seam reference (least-aligned model axis, projected, rotated by seamAngleDeg about X), Z = X x Y.",
+  "tolerance": 1e-9,
+  "cases": [
+    {
+      "name": "Test A: cylinder along +Z from the origin",
+      "params": { "axisOrigin": [0, 0, 0], "axisDirection": [0, 0, 1], "axialMinMm": 0, "axialMaxMm": 150, "seamAngleDeg": 0, "reversed": false },
+      "lengthMm": 150,
+      "seamDirection": [0, 1, 0],
+      "points": [
+        { "model": [0, 0, 0], "workpiece": [0, 0, 0] },
+        { "model": [0, 15, 40], "workpiece": [40, 15, 0] },
+        { "model": [-15, 0, 75], "workpiece": [75, 0, 15] },
+        { "model": [0, 0, 150], "workpiece": [150, 0, 0] }
+      ]
+    },
+    {
+      "name": "Test A reversed: u = 0 at the far end",
+      "params": { "axisOrigin": [0, 0, 0], "axisDirection": [0, 0, 1], "axialMinMm": 0, "axialMaxMm": 150, "seamAngleDeg": 0, "reversed": true },
+      "lengthMm": 150,
+      "seamDirection": [0, 1, 0],
+      "points": [
+        { "model": [0, 0, 150], "workpiece": [0, 0, 0] },
+        { "model": [0, 15, 150], "workpiece": [0, 15, 0] },
+        { "model": [15, 0, 0], "workpiece": [150, 0, 15] }
+      ]
+    },
+    {
+      "name": "seam rotated 90 degrees",
+      "params": { "axisOrigin": [0, 0, 0], "axisDirection": [0, 0, 1], "axialMinMm": 0, "axialMaxMm": 150, "seamAngleDeg": 90, "reversed": false },
+      "lengthMm": 150,
+      "seamDirection": [-1, 0, 0],
+      "points": [
+        { "model": [-15, 0, 10], "workpiece": [10, 15, 0] },
+        { "model": [0, -15, 10], "workpiece": [10, 0, 15] }
+      ]
+    },
+    {
+      "name": "Test D: rotated cylinder, axis (1,2,2)/3 from (12,-7,5)",
+      "params": { "axisOrigin": [12, -7, 5], "axisDirection": [1, 2, 2], "axialMinMm": 0, "axialMaxMm": 150, "seamAngleDeg": 0, "reversed": false },
+      "lengthMm": 150,
+      "seamDirection": [0.9428090415820632, -0.2357022603955158, -0.2357022603955158],
+      "points": [
+        { "model": [12, -7, 5], "workpiece": [0, 0, 0] },
+        { "model": [36.14213562373095, 9.464466094067262, 21.464466094067262], "workpiece": [30, 15, 0] },
+        { "model": [62, 103.60660171779821, 94.39339828220179], "workpiece": [150, 0, 15] },
+        { "model": [22.85786437626905, 46.53553390593274, 58.53553390593274], "workpiece": [75, -15, 0] }
+      ]
+    },
+    {
+      "name": "axial range not starting at the axis origin",
+      "params": { "axisOrigin": [5, 5, 5], "axisDirection": [1, 0, 0], "axialMinMm": 20, "axialMaxMm": 100, "seamAngleDeg": 0, "reversed": false },
+      "lengthMm": 80,
+      "seamDirection": [0, 0, 1],
+      "points": [
+        { "model": [25, 5, 5], "workpiece": [0, 0, 0] },
+        { "model": [105, 5, 15], "workpiece": [80, 10, 0] },
+        { "model": [45, -5, 5], "workpiece": [20, 0, 10] }
+      ]
+    }
+  ]
+}
