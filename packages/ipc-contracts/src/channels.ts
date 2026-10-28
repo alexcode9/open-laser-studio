@@ -29,11 +29,21 @@ export const INVOKE_CHANNELS = [
   'machine:programListing',
   'machine:setSpeed',
   'device:probeF1',
+  'cad:importDialog',
+  'cad:importBytes',
+  'cad:cancel',
+  'cad:confirmUnits',
+  'cad:measure',
+  'cad:release',
+  'cad:restore',
+  'cad:alignToRotary',
+  'cad:section',
+  'cad:exportReport',
 ] as const;
 
 export type InvokeChannel = (typeof INVOKE_CHANNELS)[number];
 
-export const EVENT_CHANNELS = ['machine:snapshot', 'app:log'] as const;
+export const EVENT_CHANNELS = ['machine:snapshot', 'app:log', 'cad:progress'] as const;
 
 export type EventChannel = (typeof EVENT_CHANNELS)[number];
 

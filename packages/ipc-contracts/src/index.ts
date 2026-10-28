@@ -1,6 +1,12 @@
 import type {
   AppInfo,
   AppSettings,
+  CadAlignResult,
+  CadMeasurement,
+  CadModelData,
+  CadProgress,
+  CadRestoreResult,
+  CadSection,
   GcodeDiagnostic,
   ImportedPath,
   JobLogEntry,
@@ -53,7 +59,8 @@ export interface Outputs {
   'settings:setSimulationOnly': AppSettings;
   'project:sample': Project;
   'project:normalize': Project;
-  'project:open': { project: Project; path: string } | null;
+  /** `warnings`: recoverable problems found while loading (e.g. a CAD file failing its checksum). */
+  'project:open': { project: Project; path: string; warnings: string[] } | null;
   'project:save': { path: string } | null;
   'import:svg': { name: string; paths: ImportedPath[] } | null;
   'import:image': { name: string; dataUrl: string } | null;
@@ -74,6 +81,16 @@ export interface Outputs {
   'machine:programListing': string[];
   'machine:setSpeed': { speed: number };
   'device:probeF1': unknown;
+  'cad:importDialog': CadModelData | null;
+  'cad:importBytes': CadModelData;
+  'cad:cancel': { cancelled: boolean };
+  'cad:confirmUnits': CadModelData;
+  'cad:measure': CadMeasurement;
+  'cad:release': { released: boolean };
+  'cad:restore': CadRestoreResult;
+  'cad:alignToRotary': CadAlignResult;
+  'cad:section': CadSection;
+  'cad:exportReport': { path: string } | null;
 }
 
 /**
@@ -95,6 +112,7 @@ export type Output<C extends InvokeChannel> = Outputs[C];
 export interface EventPayloads {
   'machine:snapshot': SessionSnapshot;
   'app:log': { level: 'info' | 'warn' | 'error'; message: string; tS: number };
+  'cad:progress': CadProgress;
 }
 
 export interface IpcError {

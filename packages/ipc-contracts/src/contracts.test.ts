@@ -58,6 +58,60 @@ describe('input validation', () => {
   });
 });
 
+describe('CAD inputs', () => {
+  const ref = { modelId: 'm', geometryRevision: 'r', kind: 'face', index: 0, point: null, onFace: null, signature: null };
+
+  it('validates measurement requests and references', () => {
+    const s = InputSchemas['cad:measure'];
+    expect(s.safeParse({ modelId: 'm', request: { kind: 'radius', a: ref } }).success).toBe(true);
+    expect(s.safeParse({ modelId: 'm', request: { kind: 'radius', a: { ...ref, kind: 'solid' } } }).success).toBe(false);
+    expect(s.safeParse({ modelId: 'm', request: { kind: 'distance', a: ref, b: { ...ref, kind: 'point', index: null, point: [0, Number.NaN, 0] } } }).success).toBe(false);
+    expect(s.safeParse({ modelId: 'm', request: { kind: 'area', refs: [] } }).success).toBe(false);
+    expect(s.safeParse({ modelId: 'm', request: { kind: 'volume', a: ref } }).success).toBe(false);
+  });
+
+  it('validates a section plane and a report export', () => {
+    expect(InputSchemas['cad:section'].safeParse({ modelId: 'm', origin: [0, 0, 0], normal: [0, 0, 1] }).success).toBe(true);
+    expect(InputSchemas['cad:section'].safeParse({ modelId: 'm', origin: [0, 0, Number.NaN], normal: [0, 0, 1] }).success).toBe(false);
+    expect(InputSchemas['cad:exportReport'].safeParse({ text: '# report', suggestedName: 'a.md' }).success).toBe(true);
+    expect(InputSchemas['cad:exportReport'].safeParse({ text: '# report', suggestedName: '' }).success).toBe(false);
+  });
+
+  it('accepts only supported import options and units', () => {
+    const s = InputSchemas['cad:importBytes'];
+    const ok = { requestId: 'r', fileName: 'a.step', bytes: new Uint8Array(4), options: {} };
+    expect(s.safeParse(ok).success).toBe(true);
+    expect(s.safeParse({ ...ok, bytes: [1, 2, 3] }).success).toBe(false);
+    expect(s.safeParse({ ...ok, options: { deflectionMm: 0 } }).success).toBe(false);
+    expect(InputSchemas['cad:confirmUnits'].safeParse({ requestId: 'r', modelId: 'm', unit: 'parsec' }).success).toBe(false);
+  });
+
+  it('persisted model refs require a sha256 checksum', () => {
+    const model = {
+      id: 'm',
+      name: 'n',
+      fileName: 'a.step',
+      sourceType: 'step',
+      declaredUnit: 'millimetre',
+      unitScaleToMm: 1,
+      unitsConfirmed: true,
+      sha256: 'a'.repeat(64),
+      byteLength: 10,
+      assetPath: `cad/${'a'.repeat(64)}.step`,
+      geometryRevision: 'r',
+      kernelVersion: 'k',
+      deflectionMm: 0.05,
+      sourceToModel: Array.from({ length: 16 }, (_, i) => (i % 5 === 0 ? 1 : 0)),
+      modelToWorkpiece: Array.from({ length: 16 }, (_, i) => (i % 5 === 0 ? 1 : 0)),
+      hiddenParts: [],
+    };
+    const s = InputSchemas['cad:restore'];
+    expect(s.safeParse({ requestId: 'r', model }).success).toBe(true);
+    expect(s.safeParse({ requestId: 'r', model: { ...model, sha256: 'xyz' } }).success).toBe(false);
+    expect(s.safeParse({ requestId: 'r', model: { ...model, sourceToModel: [1, 0, 0] } }).success).toBe(false);
+  });
+});
+
 describe('parseNativeError', () => {
   it('extracts the code prefix', () => {
     expect(parseNativeError('[SAFETY] laser not permitted')).toEqual({ code: 'SAFETY', message: 'laser not permitted' });

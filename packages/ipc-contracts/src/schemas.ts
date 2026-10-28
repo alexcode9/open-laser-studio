@@ -111,6 +111,107 @@ export const MachineProfileSchema = z
   })
   .loose();
 
+// --- CAD ------------------------------------------------------------------------------------
+
+const Vec3Schema = z.tuple([finite, finite, finite]);
+const Mat4Schema = z.array(finite).length(16);
+const sha = z.string().regex(/^[0-9a-f]{64}$/);
+const index = z.number().int().min(0).max(100_000_000);
+const SourceLengthUnitSchema = z.enum(['mm', 'cm', 'm', 'in', 'ft', 'um']);
+const GeometrySourceTypeSchema = z.enum(['step', 'stl', '3mf']);
+const QualitySchema = z.enum(['analytical', 'computed', 'mesh-derived', 'fitted']);
+
+export const CadReferenceSchema = z.object({
+  modelId: id,
+  geometryRevision: z.string().max(200),
+  kind: z.enum(['face', 'edge', 'vertex', 'point', 'part']),
+  index: index.nullable(),
+  point: Vec3Schema.nullable(),
+  onFace: index.nullable(),
+  signature: z.string().max(2000).nullable(),
+});
+
+export const CadMeasureRequestSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('distance'), a: CadReferenceSchema, b: CadReferenceSchema }),
+  z.object({ kind: z.literal('length'), a: CadReferenceSchema }),
+  z.object({ kind: z.literal('radius'), a: CadReferenceSchema }),
+  z.object({ kind: z.literal('angle'), a: CadReferenceSchema, b: CadReferenceSchema }),
+  z.object({ kind: z.literal('area'), refs: z.array(CadReferenceSchema).min(1).max(10_000) }),
+  z.object({ kind: z.literal('face-distance'), a: CadReferenceSchema, b: CadReferenceSchema }),
+]);
+
+export const CadImportOptionsSchema = z.object({
+  deflectionMm: finite.min(0.001).max(10).optional(),
+  angularDeflectionRad: finite.min(0.05).max(1).optional(),
+  unit: SourceLengthUnitSchema.optional(),
+});
+
+export const CadModelRefSchema = z.object({
+  id,
+  name: z.string().max(500),
+  fileName: z.string().max(500),
+  sourceType: GeometrySourceTypeSchema,
+  declaredUnit: z.string().max(200),
+  unitScaleToMm: finite.positive(),
+  unitsConfirmed: z.boolean(),
+  sha256: sha,
+  byteLength: z.number().int().min(0),
+  assetPath: z.string().max(200),
+  geometryRevision: z.string().max(200),
+  kernelVersion: z.string().max(200),
+  deflectionMm: nonNeg.max(10),
+  sourceToModel: Mat4Schema,
+  modelToWorkpiece: Mat4Schema,
+  hiddenParts: z.array(index).max(100_000),
+});
+
+export const CadMeasurementSchema = z.object({
+  id,
+  kind: z.enum(['distance', 'radius', 'diameter', 'angle', 'length', 'area', 'plane-distance']),
+  value: finite,
+  unit: z.enum(['mm', 'mm2', 'deg']),
+  quality: QualitySchema,
+  references: z.array(CadReferenceSchema).max(10_000),
+  tolerance: finite.nullable(),
+  label: z.string().max(500),
+  anchors: z.array(Vec3Schema).max(64),
+  details: z.record(z.string().max(100), z.union([finite, z.string().max(2000), z.boolean(), z.null()])),
+  persistent: z.boolean(),
+  stale: z.boolean(),
+});
+
+export const CadWorkpieceBindingSchema = z.object({
+  modelId: id,
+  cylinderId: z.string().max(200),
+  faces: z.array(CadReferenceSchema).max(10_000),
+  diameterMm: finite.positive(),
+  axialMinMm: finite,
+  axialMaxMm: finite,
+  axisOrigin: Vec3Schema,
+  axisDirection: Vec3Schema,
+  seamAngleDeg: finite,
+  reversed: z.boolean(),
+  modelToWorkpiece: Mat4Schema,
+});
+
+export const CadWorkspaceSchema = z.object({
+  models: z.array(CadModelRefSchema).max(64),
+  measurements: z.array(CadMeasurementSchema).max(10_000),
+  activeWorkpiece: CadWorkpieceBindingSchema.nullable(),
+  displayUnit: z.enum(['mm', 'cm', 'in']),
+  displayPrecision: z.number().int().min(0).max(6),
+});
+
+export const CadAlignParamsSchema = z.object({
+  axisOrigin: Vec3Schema,
+  axisDirection: Vec3Schema,
+  axialMinMm: finite,
+  axialMaxMm: finite,
+  seamAngleDeg: finite,
+  reversed: z.boolean(),
+  seamReference: Vec3Schema.nullish(),
+});
+
 export const ProjectSchema = z.object({
   schemaVersion: z.number().int().min(0),
   name: z.string().max(500),
@@ -120,6 +221,7 @@ export const ProjectSchema = z.object({
   cylinder: CylinderJobSettingsSchema,
   machine: MachineProfileSchema,
   assets: z.record(z.string(), z.string().startsWith('data:image/')),
+  cad: CadWorkspaceSchema.nullish(),
 });
 
 export const InjectionSchema = z.object({
@@ -192,6 +294,21 @@ export const InputSchemas = {
   'machine:programListing': z.void(),
   'machine:setSpeed': z.object({ speed: finite.min(0).max(50) }),
   'device:probeF1': z.void(),
+  'cad:importDialog': z.object({ requestId: id, options: CadImportOptionsSchema }),
+  'cad:importBytes': z.object({
+    requestId: id,
+    fileName: z.string().min(1).max(255),
+    bytes: z.instanceof(Uint8Array),
+    options: CadImportOptionsSchema,
+  }),
+  'cad:cancel': z.object({ requestId: id }),
+  'cad:confirmUnits': z.object({ requestId: id, modelId: id, unit: SourceLengthUnitSchema }),
+  'cad:measure': z.object({ modelId: id, request: CadMeasureRequestSchema }),
+  'cad:release': z.object({ modelId: id }),
+  'cad:restore': z.object({ requestId: id, model: CadModelRefSchema }),
+  'cad:alignToRotary': CadAlignParamsSchema,
+  'cad:section': z.object({ modelId: id, origin: Vec3Schema, normal: Vec3Schema }),
+  'cad:exportReport': z.object({ text: z.string().min(1).max(5_000_000), suggestedName: z.string().min(1).max(200) }),
 } as const;
 
 export type MachineCommand = z.infer<typeof MachineCommandSchema>;

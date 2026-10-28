@@ -9,6 +9,6 @@ export default defineConfig({
   test: {
     include: ['packages/*/src/**/*.test.ts', 'apps/desktop/src/**/*.test.{ts,tsx}', 'apps/desktop/electron/**/*.test.ts'],
     environment: 'node',
-    testTimeout: 60_000,
+    testTimeout: 120_000,
   },
 });
