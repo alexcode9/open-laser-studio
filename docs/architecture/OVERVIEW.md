@@ -11,6 +11,7 @@ flowchart LR
     UI[Panels / Toolbar] --> Stores[Zustand stores<br/>project · plan · machine · playback]
     Editor[Konva 2D editor] --> Stores
     View3D[R3F cylinder view] --> Stores
+    CadWS[CAD workspace / R3F] --> Stores
     Stores --> IPCc[lib/ipc.ts]
   end
   subgraph Preload["Preload (CJS, contextBridge)"]
@@ -21,6 +22,7 @@ flowchart LR
     Settings[SettingsStore<br/>simulationOnly / developerMode]
     Host[MachineHost<br/>~30 Hz tick · snapshots]
     Native[laser_node.node]
+    CadHost[CadHost + cad-kernel utilityProcess]
   end
   subgraph Rust["Rust core (crates/)"]
     Core[laser-core<br/>units · safety FSM · profiles]
@@ -37,6 +39,7 @@ flowchart LR
   IPC --> Settings
   IPC --> Host --> Native
   IPC --> Native
+  IPC --> CadHost
   Native --> Jobs & Motion & Proj & GC & Geo
   Jobs --> Dev --> Sim
   Dev --> Proto
@@ -56,7 +59,8 @@ flowchart LR
 | `laser-devices` | `LaserDevice` / `AxisController` traits; simulated F1; real F1 (connect/probe only); external controller over a transport. | [sim-only] |
 | `laser-simulator` | Virtual F1 + virtual axis controller with fault injection and timing. | [implemented] |
 | `laser-jobs` | `SimSession`, indexed job runner (barrier-synchronized), logs, outcome. | [implemented] |
-| `laser-project` | `.ols` ZIP container, migrations, SVG import, image import, text-to-path. | [implemented] |
+| `laser-project` | `.ols` ZIP container, migrations, SVG import, image import, text-to-path, CAD sources. | [implemented] |
+| `packages/cad-kernel` | STEP/STL/3MF import, B-Rep analysis, measure/section in a utility process (opencascade.js). | [implemented] |
 | `firmware/esp32-motion-controller` | Axis controller firmware. | skeleton; host-tested logic only |
 
 ## Data flow: design → toolpath → preview → simulated job
@@ -83,8 +87,8 @@ sequenceDiagram
 
 ## Coordinate frames
 
-The four coordinate frames are described in [MOTION_MODEL.md](MOTION_MODEL.md):
-design (u, s), galvo (x, y), machine (A, U) and 3D (the cylinder's local frame). One Rust
+The four machine/design frames are described in [MOTION_MODEL.md](MOTION_MODEL.md). CAD source,
+model and workpiece spaces are in [COORDINATE_SYSTEMS.md](COORDINATE_SYSTEMS.md). One Rust
 implementation of each conversion is mirrored by `packages/geometry-adapters` for UI-only use. The two
 implementations are kept in sync by `tests/fixtures/coordinates.json`, which both test suites check.
 
@@ -96,3 +100,4 @@ See `docs/adr/`:
 - [0002](../adr/0002-editor-library.md): Konva for the editor.
 - [0003](../adr/0003-rust-owns-geometry.md): Rust owns geometry and motion.
 - [0004](../adr/0004-dependency-versions.md): pinned dependency versions.
+- [0005](../adr/0005-cad-geometry-kernel.md): Open CASCADE in a utility process.

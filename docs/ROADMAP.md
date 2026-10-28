@@ -5,8 +5,9 @@ order within each milestone.
 
 ## Milestone 1: working desktop studio (simulation) ✅
 
-Editor, cylindrical workspace, toolpath planner, simulator, indexed job engine, timeline and
-G-code inspector; Rust core with napi bridge; tests, docs and packaging. See `CHANGELOG.md`.
+Editor, cylindrical workspace, CAD inspection (STEP/STL/3MF, measurements, Use as Workpiece),
+toolpath planner, simulator, indexed job engine, timeline and G-code inspector; Rust core with
+napi bridge; tests, docs and packaging. See `CHANGELOG.md`.
 
 ## Milestone 2: F1 protocol evidence (read-only)
 

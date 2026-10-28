@@ -7,9 +7,11 @@ laser.
 
 Open **Setup → Workpiece** and enter:
 
-- **Diameter**: measure it with calipers where you will engrave. The circumference `π·D` sets the
-  height of the unwrapped canvas.
-- **Length**: the usable axial length.
+- **Diameter**: measure it with calipers where you will engrave, or import a STEP model in the
+  **CAD** workspace, select the cylindrical face and choose **Use as workpiece**. The circumference
+  `π·D` sets the height of the unwrapped canvas. CAD values are the ideal model, not the
+  manufactured tolerance.
+- **Length**: the usable axial length (from the CAD cylinder’s axial extent when bound).
 - **Angular zero** and **axial zero**: where design `s = 0` and `u = 0` sit on the machine.
 - **Rotation sign**: flip it if the preview rotates the wrong way compared with your rotary.
 

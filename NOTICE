@@ -17,5 +17,19 @@ No BeamInk source code is included in this repository.
 Firmware-family information (V1 REST vs WS-V2) was learned from the protocol
 notes of ha-xtool (https://github.com/thecodingdad/ha-xtool). No code is included.
 
+Open CASCADE Technology / opencascade.js
+----------------------------------------
+
+CAD import and exact measurement use Open CASCADE Technology via
+opencascade.js 2.0.0-beta (OCCT 7.6), licensed under LGPL-2.1-only:
+
+  https://github.com/donalffons/opencascade.js
+  https://dev.opencascade.org/
+
+The wasm binary is loaded at runtime in an Electron utility process and is
+shipped as an extra resource of the packaged app. No OCCT source is modified
+in this repository. Dynamic linking of the wasm build satisfies LGPL for this
+use; the rest of Open Laser Studio remains MIT.
+
 xTool, xTool F1 and LightBurn are trademarks of their respective owners.
 Open Laser Studio is not affiliated with or endorsed by them.

@@ -56,16 +56,17 @@ node scripts/make-examples.mjs     # regenerate examples/ (needs the native modu
 | `OLS_USER_DATA_DIR` | override Electron `userData` (tests use a temp dir) |
 | `OLS_NATIVE_PATH` | load the native module from an explicit path |
 | `OLS_PACKAGED_EXE` | enables the packaged-app Playwright spec |
+| `OLS_OCCT_DIR` | directory containing `opencascade.full.js` / `.wasm` (packaged app sets this) |
 
 ## Repository layout
 
 ```text
 apps/desktop/            Electron app (electron/ main+preload, src/ renderer, tests/e2e)
-packages/                shared-types, ipc-contracts, geometry-adapters, ui
+packages/                shared-types, ipc-contracts, geometry-adapters, cad-kernel, ui
 crates/                  Rust core (laser-*) and laser-node (napi bridge)
 tools/                   simulator-cli (ols-sim), gcode-analyzer (ols-gcode), protocol-inspector (design)
 firmware/                esp32-motion-controller (skeleton)
-tests/fixtures/          cross-language fixtures (coordinates, axis frames)
+tests/fixtures/          cross-language fixtures (coordinates, axis frames, CAD)
 examples/                sample projects, G-code and timelines
 docs/                    architecture, research, hardware, protocols, user guide
 ```

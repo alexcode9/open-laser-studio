@@ -13,7 +13,8 @@ with an external **rotary (A) + linear (U)** axis for cylindrical engraving.
 | --- | --- |
 | 2D editor (Konva): rect, ellipse, polyline, text→outline, SVG and image import, layers, groups, transforms (45° rotation snaps), undo/redo, marquee selection | implemented |
 | Cylindrical workspace: unwrapped surface, seams, wrapped ghosts, A/U readout, section overlay | implemented |
-| 3D preview (React Three Fiber): textured cylinder, toolpath, head, beam, live spot, U carriage | implemented |
+| CAD inspection: STEP/STL/3MF import, B-Rep measurements, section, Use as Workpiece | implemented |
+| 3D preview (React Three Fiber): textured cylinder, CAD workpiece mesh, toolpath, head, beam, live spot, U carriage | implemented |
 | Toolpath planning in Rust: vector, hatch fill, raster (threshold, Floyd–Steinberg, grayscale), indexed cylinder strategy, coupled strategy (experimental) | implemented |
 | Simulator: virtual F1 + virtual axis controller, fault injection, speed 0–50× | implemented |
 | Job engine: connect → home → prepare → arm (checklist) → run → completion, with barrier sync, pause at section boundaries, E-stop latch | simulated |
@@ -43,14 +44,15 @@ See [docs/architecture/OVERVIEW.md](docs/architecture/OVERVIEW.md).
 ```text
 apps/desktop      Electron + React app
 crates/           laser-core, -geometry, -motion, -gcode, -protocol, -devices, -simulator, -jobs, -project, laser-node
-packages/         shared TS types, IPC contracts, geometry adapters, UI kit
+packages/         shared TS types, IPC contracts, geometry adapters, CAD kernel, UI kit
 tools/            ols-sim, ols-gcode, protocol-inspector (design)
 firmware/         ESP32-S3 axis controller (skeleton)
 ```
 
 ## Documentation
 
-- Architecture: [overview](docs/architecture/OVERVIEW.md), [motion model](docs/architecture/MOTION_MODEL.md), [job execution](docs/architecture/JOB_EXECUTION.md)
+- Architecture: [overview](docs/architecture/OVERVIEW.md), [motion model](docs/architecture/MOTION_MODEL.md), [coordinate systems](docs/architecture/COORDINATE_SYSTEMS.md), [CAD geometry](docs/architecture/CAD_GEOMETRY.md), [job execution](docs/architecture/JOB_EXECUTION.md)
+- CAD: [import](docs/features/CAD_IMPORT.md), [measurements](docs/features/CAD_MEASUREMENTS.md), [workpiece setup](docs/features/CAD_WORKPIECE_SETUP.md), [fixtures](docs/testing/CAD_FIXTURES.md)
 - Research: [F1 protocol](docs/research/F1_PROTOCOL.md), [evidence](docs/research/PROTOCOL_EVIDENCE.md), [open questions](docs/research/OPEN_QUESTIONS.md), [reference projects](docs/research/REFERENCE_PROJECTS.md)
 - Hardware: [ESP32 controller](docs/hardware/ESP32_CONTROLLER.md), [wiring](docs/hardware/WIRING.md), [axis protocol](docs/protocols/AXIS_CONTROLLER_PROTOCOL.md)
 - User guide: [cylindrical engraving](docs/user-guide/CYLINDRICAL_ENGRAVING.md)

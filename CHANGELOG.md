@@ -5,6 +5,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 ## [Unreleased] — Milestone 1
 
 ### Added
+- CAD Inspection workspace: STEP/STL/3MF import in an isolated Open CASCADE kernel (`utilityProcess`), B-Rep measurements with quality tags, section planes, mesh cylinder fitting, assembly isolate, measurement report export, and Use as Workpiece (Rust `modelToWorkpiece`). Schema v2 `.ols` files embed CAD sources under `cad/<sha256>.<ext>`.
 - Research documents for the xTool F1 protocol with confidence-tagged evidence.
 - pnpm + Cargo monorepo: Electron/React desktop app and Rust core crates.
 - Rust: units, safety state machine, machine profiles, cylinder transforms, G-code parser/validator/F1 dialect, toolpath planner (vector, fill, raster, indexed, coupled), simulator, device abstraction (simulator, F1, external controller, composite), external-controller serial protocol + emulator, indexed job engine, `.ols` project format.

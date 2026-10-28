@@ -27,6 +27,8 @@ Versions were checked against the npm and crates.io registries on 2026-10-27.
 | usvg | 0.49 | SVG import and text-to-path |
 | image | 0.25 | PNG/JPEG/BMP decoding for raster |
 | zip | 9 | `.ols` container |
+| opencascade.js | 2.0.0-beta.b5ff984 | OCCT 7.6 wasm, CAD kernel only (LGPL-2.1) |
+| three-mesh-bvh | 0.9 | CAD face picking |
 
 ## Excluded
 - Tauri, Flutter, React Native, Python runtime (spec 3.12).

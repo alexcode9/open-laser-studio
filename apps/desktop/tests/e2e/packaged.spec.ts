@@ -27,7 +27,7 @@ test('packaged app loads the native core and plans the sample project', async ()
     await expect(page.getByTestId('mode-badge')).toHaveText(/simulation/i);
     await page.getByTestId('tab-plan').click();
     await expect(page.getByTestId('plan-report')).toContainText('executable');
-    const csp = await page.evaluate(() => document.querySelector('meta[http-equiv="Content-Security-Policy"]')?.getAttribute('content') ?? '');
+    const csp = (await page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content')) ?? '';
     expect(csp).toContain("default-src 'self'");
     expect(errors).toEqual([]);
   } finally {
