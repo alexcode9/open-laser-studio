@@ -6,7 +6,7 @@ import { defineConfig } from 'electron-vite';
 import type { Plugin } from 'vite';
 
 // Workspace packages ship TypeScript sources and must be bundled, not externalized.
-const bundled = ['@ols/ipc-contracts', '@ols/shared-types', '@ols/geometry-adapters', 'zod'];
+const bundled = ['@ols/ipc-contracts', '@ols/shared-types', '@ols/geometry-adapters', '@ols/cad-kernel', 'zod'];
 
 const PROD_CSP = [
   "default-src 'self'",
@@ -37,7 +37,13 @@ export default defineConfig({
   main: {
     build: {
       externalizeDeps: { exclude: bundled },
-      rollupOptions: { input: { index: resolve(__dirname, 'electron/main/index.ts') } },
+      rollupOptions: {
+        input: {
+          index: resolve(__dirname, 'electron/main/index.ts'),
+          // Entry of the CAD kernel utility process (opencascade.js is loaded from disk at runtime).
+          'cad-kernel': resolve(__dirname, 'electron/cad/kernel-entry.ts'),
+        },
+      },
     },
   },
   preload: {

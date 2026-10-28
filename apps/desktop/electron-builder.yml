@@ -15,6 +15,15 @@ extraResources:
   # Loaded by electron/main/native.ts from `process.resourcesPath/native/laser_node.node`.
   - from: native/laser_node.node
     to: native/laser_node.node
+  # OCCT WebAssembly kernel (LGPL-2.1, shipped unmodified as a separate file) for the CAD
+  # utility process; located by electron/main/cad-process.ts.
+  - from: ../../packages/cad-kernel/node_modules/opencascade.js
+    to: occt
+    filter:
+      - package.json
+      - LICENSE*
+      - dist/opencascade.full.js
+      - dist/opencascade.full.wasm
 asar: true
 npmRebuild: false
 electronLanguages: [en-US]

@@ -2,9 +2,10 @@ import { readFileSync, statSync, writeFileSync } from 'node:fs';
 import { basename, extname } from 'node:path';
 
 import { InputSchemas, type Envelope, type InvokeChannel, type Outputs, parseNativeError } from '@ols/ipc-contracts';
-import type { AppInfo, Project } from '@ols/shared-types';
+import type { AppInfo, CadAlignParams, CadImportStage, CadMeasureRequest, CadModelRef, Project, Vec3 } from '@ols/shared-types';
 import { type BrowserWindow, type IpcMainInvokeEvent, app, dialog, ipcMain } from 'electron';
 
+import type { CadHost } from './cad';
 import { log } from './logger';
 import type { MachineHost } from './machine';
 import type { NativeModule } from './native';
@@ -24,8 +25,11 @@ export interface IpcDeps {
   nativeError: string | null;
   settings: SettingsStore;
   machine: MachineHost | null;
+  cad: CadHost;
   isTrustedSender: (url: string) => boolean;
 }
+
+const CAD_EXTENSIONS = ['step', 'stp', 'stl', '3mf'];
 
 type Handler<C extends InvokeChannel> = (input: unknown) => Promise<Outputs[C]> | Outputs[C];
 
@@ -150,10 +154,11 @@ export function registerIpc(d: IpcDeps): void {
     if (r.canceled || !path) return null;
     if (statSync(path).size > 512 * 1024 * 1024) throw Object.assign(new Error('file too large'), { code: 'INVALID_ARGUMENT' });
     const loaded = native().loadOls(readFileSync(path));
+    d.cad.stashFiles(loaded.cadFiles.map((f) => ({ sha256: f.sha256, bytes: new Uint8Array(f.data) })));
     allowedPaths.add(path);
     d.settings.addRecent(path);
-    log('info', 'project opened', { path });
-    return { project: loaded.project, path };
+    log('info', 'project opened', { path, cadFiles: loaded.cadFiles.length, warnings: loaded.warnings.length });
+    return { project: loaded.project, path, warnings: loaded.warnings };
   });
 
   handle('project:save', async (v) => {
@@ -168,7 +173,12 @@ export function registerIpc(d: IpcDeps): void {
       if (r.canceled || !r.filePath) return null;
       path = r.filePath;
     }
-    const bytes = native().saveOls(p.project as unknown as Project, p.thumbnailPng ? Buffer.from(p.thumbnailPng) : null);
+    const cadFiles = d.cad.filesFor((p.project.cad?.models ?? []) as CadModelRef[]);
+    const bytes = native().saveOls(
+      p.project as unknown as Project,
+      p.thumbnailPng ? Buffer.from(p.thumbnailPng) : null,
+      cadFiles.map((f) => ({ path: f.path, sha256: f.sha256, data: Buffer.from(f.bytes) })),
+    );
     writeFileSync(path, bytes);
     allowedPaths.add(path);
     d.settings.addRecent(path);
@@ -269,6 +279,80 @@ export function registerIpc(d: IpcDeps): void {
     const { speed } = input('machine:setSpeed', v);
     machine().speed = speed;
     return { speed };
+  });
+
+  const cadProgress = (requestId: string) => (stage: CadImportStage, fraction: number) => {
+    const w = d.window();
+    if (w && !w.isDestroyed()) w.webContents.send('cad:progress', { requestId, stage, fraction });
+  };
+
+  handle('cad:importDialog', async (v) => {
+    const p = input('cad:importDialog', v);
+    const r = await dialog.showOpenDialog(win(), {
+      title: 'Import CAD model',
+      filters: [
+        { name: 'CAD models (STEP, STL, 3MF)', extensions: CAD_EXTENSIONS },
+        { name: 'STEP', extensions: ['step', 'stp'] },
+        { name: 'STL', extensions: ['stl'] },
+        { name: '3MF', extensions: ['3mf'] },
+      ],
+      properties: ['openFile'],
+    });
+    const path = r.filePaths[0];
+    if (r.canceled || !path) return null;
+    if (!CAD_EXTENSIONS.includes(extname(path).slice(1).toLowerCase())) throw Object.assign(new Error('unsupported CAD file type'), { code: 'UNSUPPORTED' });
+    const size = statSync(path).size;
+    if (size > 200 * 1024 * 1024) throw Object.assign(new Error('file exceeds the 200 MB import limit'), { code: 'INVALID_ARGUMENT' });
+    const bytes = new Uint8Array(readFileSync(path));
+    log('info', 'cad import', { file: basename(path), bytes: size });
+    // Only the base name leaves the main process; absolute paths are never stored in the model.
+    return d.cad.import(bytes, basename(path), p.options, p.requestId, cadProgress(p.requestId));
+  });
+
+  handle('cad:importBytes', (v) => {
+    const p = input('cad:importBytes', v);
+    return d.cad.import(p.bytes, basename(p.fileName), p.options, p.requestId, cadProgress(p.requestId));
+  });
+
+  handle('cad:cancel', (v) => ({ cancelled: d.cad.cancel(input('cad:cancel', v).requestId) }));
+
+  handle('cad:confirmUnits', (v) => {
+    const p = input('cad:confirmUnits', v);
+    return d.cad.confirmUnits(p.modelId, p.unit, p.requestId, cadProgress(p.requestId));
+  });
+
+  handle('cad:measure', (v) => {
+    const p = input('cad:measure', v);
+    return d.cad.measure(p.modelId, p.request as CadMeasureRequest);
+  });
+
+  handle('cad:release', async (v) => ({ released: await d.cad.release(input('cad:release', v).modelId) }));
+
+  handle('cad:restore', (v) => {
+    const p = input('cad:restore', v);
+    return d.cad.restore(p.model as CadModelRef, p.requestId, cadProgress(p.requestId));
+  });
+
+  handle('cad:alignToRotary', (v) => native().cadAlignToRotary(input('cad:alignToRotary', v) as CadAlignParams));
+
+  handle('cad:section', (v) => {
+    const p = input('cad:section', v);
+    return d.cad.section(p.modelId, p.origin as Vec3, p.normal as Vec3);
+  });
+
+  handle('cad:exportReport', async (v) => {
+    const p = input('cad:exportReport', v);
+    const r = await dialog.showSaveDialog(win(), {
+      title: 'Export CAD measurement report',
+      defaultPath: p.suggestedName,
+      filters: [
+        { name: 'Markdown', extensions: ['md'] },
+        { name: 'Text', extensions: ['txt'] },
+      ],
+    });
+    if (r.canceled || !r.filePath) return null;
+    writeFileSync(r.filePath, p.text);
+    return { path: r.filePath };
   });
 
   handle('device:probeF1', () => {

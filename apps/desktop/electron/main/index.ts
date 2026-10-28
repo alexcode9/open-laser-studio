@@ -4,6 +4,8 @@ import { fileURLToPath } from 'node:url';
 
 import { BrowserWindow, app, nativeImage, session, shell } from 'electron';
 
+import { CadHost } from './cad';
+import { resolveOcctDir, utilityKernel } from './cad-process';
 import { registerIpc } from './ipc';
 import { addLogSink, initLogger, log } from './logger';
 import { MachineHost } from './machine';
@@ -142,7 +144,17 @@ void app.whenReady().then(() => {
     if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('app:log', entry);
   });
 
-  registerIpc({ window: () => mainWindow, native, nativeError, settings, machine, isTrustedSender });
+  const cadLog = (message: string, data?: Record<string, unknown>) => log('info', message, data);
+  let occtDir = '';
+  try {
+    occtDir = resolveOcctDir();
+  } catch (e) {
+    log('error', 'CAD kernel files not found', { error: e instanceof Error ? e.message : String(e) });
+  }
+  // The kernel process starts on the first CAD request (wasm init takes several seconds).
+  const cad = new CadHost(utilityKernel(join(here, 'cad-kernel.js'), occtDir, cadLog), undefined, cadLog);
+
+  registerIpc({ window: () => mainWindow, native, nativeError, settings, machine, cad, isTrustedSender });
 
   mainWindow = createWindow();
   mainWindow.on('closed', () => {
@@ -160,6 +172,7 @@ void app.whenReady().then(() => {
     // Always latch a stop on the way out; never leave a (simulated) job running.
     machine?.emergencyStopQuiet();
     machine?.dispose();
+    cad.dispose();
     log('info', 'quit');
   });
 });
