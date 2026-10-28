@@ -1,6 +1,10 @@
 // TypeScript mirrors of the Rust serde types (camelCase). The Rust core is the source of
 // truth; keep these in sync with crates/laser-*/src (see docs/architecture/OVERVIEW.md).
 
+import type { CadWorkspace } from './cad';
+
+export * from './cad';
+
 export type WorkspaceMode = 'flat' | 'cylinder';
 export type CylinderStrategy = 'indexed' | 'coupled';
 export type LayerMode = 'line' | 'fill' | 'image';
@@ -161,6 +165,8 @@ export interface Project {
   cylinder: CylinderJobSettings;
   machine: MachineProfile;
   assets: Record<string, string>;
+  /** Imported CAD models, measurements and the CAD-derived workpiece binding. */
+  cad?: CadWorkspace | null;
 }
 
 export interface Bounds {

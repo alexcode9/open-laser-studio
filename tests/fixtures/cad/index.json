@@ -1,0 +1,38 @@
+[
+  {
+    "name": "a-cylinder-30x150.step",
+    "description": "Test A: Ø30 × 150 mm cylinder along +Z"
+  },
+  {
+    "name": "b-stepped-shaft.step",
+    "description": "Test B: Ø30 × 80 mm + Ø20 × 50 mm coaxial shaft along +Z"
+  },
+  {
+    "name": "c-plate-with-hole.step",
+    "description": "Test C: 100 × 60 × 10 mm plate, Ø12 mm through-hole at (50, 30)"
+  },
+  {
+    "name": "d-rotated-cylinder.step",
+    "description": "Test D: Ø30 × 150 mm cylinder, axis (1, 2, 2)/3 from (12, -7, 5)"
+  },
+  {
+    "name": "e-cylinder-lowres.stl",
+    "description": "Test E: 16-segment faceted Ø30 × 150 cylinder, binary STL (mm)"
+  },
+  {
+    "name": "e-cylinder-lowres-ascii.stl",
+    "description": "Test E: same mesh, ASCII STL"
+  },
+  {
+    "name": "f-plate-mm.step",
+    "description": "Test F: Test C plate written in millimetres"
+  },
+  {
+    "name": "f-plate-inch.step",
+    "description": "Test F: Test C plate written in inches"
+  },
+  {
+    "name": "g-assembly.step",
+    "description": "Test G: two-part assembly with translated and rotated instances"
+  }
+]
