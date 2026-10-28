@@ -1,10 +1,12 @@
 import { Badge, Button, Separator, Tooltip, cn } from '@ols/ui';
-import { Cylinder, FileDown, FilePlus2, FolderOpen, ImagePlus, OctagonX, Redo2, Save, SaveAll, Square, Undo2, Upload } from 'lucide-react';
+import { Box, Cylinder, FileDown, FilePlus2, FolderOpen, ImagePlus, OctagonX, PenTool, Redo2, Save, SaveAll, Square, Undo2, Upload } from 'lucide-react';
 
 import { exportGcode, importImage, importSvg, newSampleProject, openProject, saveProject } from '@/lib/actions';
+import { importCadDialog } from '@/lib/cad';
 import { useMachine } from '@/stores/machine';
 import { useProject } from '@/stores/project';
 import { useSettings } from '@/stores/settings';
+import { useView } from '@/stores/view';
 
 import { SafetyPill } from './SafetyPill';
 
@@ -30,6 +32,8 @@ export function TopBar() {
   const snapshot = useMachine((s) => s.snapshot);
   const command = useMachine((s) => s.command);
   const settings = useSettings((s) => s.settings);
+  const workspace = useView((s) => s.workspace);
+  const setWorkspace = useView((s) => s.setWorkspace);
   const lockMode = !!snapshot && ['ARMED', 'RUNNING', 'PAUSED', 'STOPPING'].includes(snapshot.safetyState);
 
   return (
@@ -61,9 +65,33 @@ export function TopBar() {
       <IconButton label="Import image" onClick={() => void importImage()}>
         <ImagePlus />
       </IconButton>
+      <IconButton label="Import CAD model (STEP, STL, 3MF)" onClick={() => void importCadDialog()}>
+        <Box />
+      </IconButton>
       <IconButton label="Export G-code (inspection only)" onClick={() => void exportGcode()}>
         <FileDown />
       </IconButton>
+      <Separator vertical />
+      <div className="flex items-center rounded-md border border-border p-0.5" role="radiogroup" aria-label="Workspace">
+        {(
+          [
+            ['design', 'Design', PenTool],
+            ['cad', 'CAD', Box],
+          ] as const
+        ).map(([w, label, Icon]) => (
+          <Button
+            key={w}
+            size="sm"
+            role="radio"
+            aria-checked={workspace === w}
+            data-testid={`workspace-${w}`}
+            className={cn(workspace === w && 'bg-accent text-foreground')}
+            onClick={() => setWorkspace(w)}
+          >
+            <Icon /> {label}
+          </Button>
+        ))}
+      </div>
       <Separator vertical />
       <IconButton label="Undo (Ctrl+Z)" onClick={undo} disabled={!canUndo}>
         <Undo2 />

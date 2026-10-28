@@ -8,7 +8,12 @@ export interface Toast {
   message: string;
 }
 
+/** Main work area: the 2D/3D design views or the CAD inspection workspace. */
+export type Workspace = 'design' | 'cad';
+
 interface ViewState {
+  workspace: Workspace;
+  setWorkspace: (w: Workspace) => void;
   tool: Tool;
   /** Pixels per millimetre. */
   zoom: number;
@@ -32,6 +37,8 @@ interface ViewState {
 let toastSeq = 0;
 
 export const useView = create<ViewState>((set) => ({
+  workspace: 'design',
+  setWorkspace: (workspace) => set({ workspace }),
   tool: 'select',
   zoom: 3,
   panX: 40,

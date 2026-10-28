@@ -1,4 +1,4 @@
-import { AlertDialog as AD, Tabs as TabsPrimitive, Tooltip as TooltipPrimitive } from 'radix-ui';
+import { AlertDialog as AD, Dialog as DialogPrimitive, Tabs as TabsPrimitive, Tooltip as TooltipPrimitive } from 'radix-ui';
 import type { ComponentProps, ReactNode } from 'react';
 
 import { Button } from './button';
@@ -60,6 +60,52 @@ export function ConfirmDialog({ open, onOpenChange, title, description, confirmL
         </AD.Content>
       </AD.Portal>
     </AD.Root>
+  );
+}
+
+export interface DialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  description?: ReactNode;
+  children?: ReactNode;
+  footer?: ReactNode;
+  className?: string;
+  /** Block closing via Escape / outside click (e.g. while work is in progress). */
+  modalLocked?: boolean;
+}
+
+/** General-purpose modal dialog. */
+export function Dialog({ open, onOpenChange, title, description, children, footer, className, modalLocked }: DialogProps) {
+  const block = (e: Event) => {
+    if (modalLocked) e.preventDefault();
+  };
+  return (
+    <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/60" />
+        <DialogPrimitive.Content
+          onEscapeKeyDown={block}
+          onPointerDownOutside={block}
+          onInteractOutside={block}
+          className={cn(
+            'fixed top-1/2 left-1/2 z-50 max-h-[85vh] w-[480px] -translate-x-1/2 -translate-y-1/2 overflow-auto rounded-lg border border-border bg-popover p-5 text-popover-foreground shadow-xl',
+            className,
+          )}
+        >
+          <DialogPrimitive.Title className="text-sm font-semibold">{title}</DialogPrimitive.Title>
+          {description ? (
+            <DialogPrimitive.Description asChild>
+              <div className="mt-2 text-xs text-muted-foreground">{description}</div>
+            </DialogPrimitive.Description>
+          ) : (
+            <DialogPrimitive.Description className="sr-only">{title}</DialogPrimitive.Description>
+          )}
+          {children && <div className="mt-3">{children}</div>}
+          {footer && <div className="mt-5 flex justify-end gap-2">{footer}</div>}
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
   );
 }
 

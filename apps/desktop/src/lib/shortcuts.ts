@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 
+import { useCad } from '@/stores/cad';
 import { useMachine } from '@/stores/machine';
 import { useProject } from '@/stores/project';
 import { useView } from '@/stores/view';
@@ -43,6 +44,17 @@ export function useShortcuts(): void {
       if (mod && e.key.toLowerCase() === 'y') {
         e.preventDefault();
         p.redo();
+        return;
+      }
+      if (useView.getState().workspace === 'cad') {
+        if (mod) return;
+        const cad = useCad.getState();
+        if (e.key === 'Escape') {
+          if (cad.toolPicks.length > 0) cad.clearToolPicks();
+          else if (cad.tool !== 'select') cad.setTool('select');
+          else cad.select(null);
+        } else if (e.key.toLowerCase() === 'f') cad.requestView('fit');
+        else if (e.key.toLowerCase() === 'i') cad.requestView('iso');
         return;
       }
       if (mod && e.key.toLowerCase() === 'd') {

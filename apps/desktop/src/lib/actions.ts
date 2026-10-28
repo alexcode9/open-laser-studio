@@ -5,6 +5,7 @@ import { usePlan } from '@/stores/plan';
 import { useProject } from '@/stores/project';
 import { toast } from '@/stores/view';
 
+import { restoreCadModels } from './cad';
 import { call, errorMessage } from './ipc';
 import { IDENTITY, newId } from './shapes';
 
@@ -21,7 +22,9 @@ function guardDirty(): boolean {
 export async function newSampleProject(): Promise<void> {
   if (!guardDirty()) return;
   try {
-    useProject.getState().load(await call('project:sample'), null);
+    const p = await call('project:sample');
+    useProject.getState().load(p, null);
+    void restoreCadModels(p);
   } catch (e) {
     toast('error', errorMessage(e));
   }
@@ -34,6 +37,8 @@ export async function openProject(): Promise<void> {
     if (!r) return;
     useProject.getState().load(r.project, r.path);
     toast('info', `Opened ${r.path}`);
+    for (const w of r.warnings) toast('warn', w);
+    void restoreCadModels(r.project);
   } catch (e) {
     toast('error', `Open failed: ${errorMessage(e)}`);
   }

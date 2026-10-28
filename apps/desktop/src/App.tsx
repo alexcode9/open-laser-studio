@@ -2,6 +2,9 @@ import { PanelGroup, ResizablePanel, ResizeHandle, TooltipProvider } from '@ols/
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+import { CadWorkspace } from './cad/CadWorkspace';
+import { ImportDialog } from './cad/ImportDialog';
+import { UseAsWorkpieceDialog } from './cad/UseAsWorkpieceDialog';
 import { BottomPanel } from './components/BottomPanel';
 import { RightPanel } from './components/RightPanel';
 import { StatusBar } from './components/StatusBar';
@@ -16,6 +19,7 @@ import { useMachine } from './stores/machine';
 import { startPlaybackLoop } from './stores/playback';
 import { useProject } from './stores/project';
 import { useSettings } from './stores/settings';
+import { useView } from './stores/view';
 
 let booted: Promise<void> | null = null;
 
@@ -31,6 +35,7 @@ export function App() {
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const nativeError = useSettings((s) => s.info?.nativeError ?? null);
+  const workspace = useView((s) => s.workspace);
   useShortcuts();
 
   useEffect(() => {
@@ -68,15 +73,19 @@ export function App() {
             <ResizablePanel id="center" defaultSize="76%" minSize="40%">
               <PanelGroup orientation="vertical" id="center-split">
                 <ResizablePanel id="views" defaultSize="68%" minSize="25%">
-                  <PanelGroup orientation="horizontal" id="views-split">
-                    <ResizablePanel id="design" defaultSize="55%" minSize="20%">
-                      <DesignCanvas />
-                    </ResizablePanel>
-                    <ResizeHandle />
-                    <ResizablePanel id="preview3d" defaultSize="45%" minSize="15%">
-                      <CylinderView />
-                    </ResizablePanel>
-                  </PanelGroup>
+                  {workspace === 'cad' ? (
+                    <CadWorkspace />
+                  ) : (
+                    <PanelGroup orientation="horizontal" id="views-split">
+                      <ResizablePanel id="design" defaultSize="55%" minSize="20%">
+                        <DesignCanvas />
+                      </ResizablePanel>
+                      <ResizeHandle />
+                      <ResizablePanel id="preview3d" defaultSize="45%" minSize="15%">
+                        <CylinderView />
+                      </ResizablePanel>
+                    </PanelGroup>
+                  )}
                 </ResizablePanel>
                 <ResizeHandle />
                 <ResizablePanel id="bottom" defaultSize="32%" minSize={120}>
@@ -91,6 +100,8 @@ export function App() {
           </PanelGroup>
         </div>
         <StatusBar />
+        <ImportDialog />
+        <UseAsWorkpieceDialog />
         <Toasts />
       </div>
     </TooltipProvider>

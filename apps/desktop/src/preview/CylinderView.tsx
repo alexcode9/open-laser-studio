@@ -6,7 +6,9 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 
+import { modelGeometry } from '@/cad/geometry';
 import { call } from '@/lib/ipc';
+import { useCad } from '@/stores/cad';
 import { usePlan } from '@/stores/plan';
 import { activeTimeline, sampleAt, usePlayback } from '@/stores/playback';
 import { useProject } from '@/stores/project';
@@ -87,6 +89,25 @@ function useLineGeometry(positions: Float32Array | undefined): THREE.BufferGeome
     g.computeBoundingSphere();
     return g;
   }, [positions]);
+}
+
+/** The CAD model bound as workpiece, placed in the pose frame by its model→workpiece transform. */
+function CadWorkpieceMesh({ project }: { project: Project }) {
+  const binding = project.cad?.activeWorkpiece ?? null;
+  const data = useCad((s) => (binding ? s.models[binding.modelId] : undefined));
+  const matrix = useMemo(() => (binding ? new THREE.Matrix4().fromArray(binding.modelToWorkpiece) : null), [binding]);
+  if (!binding || !data || !matrix) return null;
+  const geo = modelGeometry(data);
+  return (
+    <group matrixAutoUpdate={false} matrix={matrix}>
+      <mesh geometry={geo.mesh} renderOrder={2}>
+        <meshStandardMaterial color="#7dd3fc" transparent opacity={0.35} depthWrite={false} side={THREE.DoubleSide} />
+      </mesh>
+      <lineSegments geometry={geo.edges} renderOrder={3}>
+        <lineBasicMaterial color="#bae6fd" transparent opacity={0.8} />
+      </lineSegments>
+    </group>
+  );
 }
 
 function Scene({ project }: { project: Project }) {
@@ -206,8 +227,9 @@ function Scene({ project }: { project: Project }) {
             )}
             <mesh position={[L / 2, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
               <cylinderGeometry args={[R * 0.15, R * 0.15, L + 0.5, 12]} />
-              <meshBasicMaterial color="#111" />
+                <meshBasicMaterial color="#111" />
             </mesh>
+            <CadWorkpieceMesh project={project} />
             {showToolpath && markGeo && (
               <lineSegments geometry={markGeo}>
                 <lineBasicMaterial color="#e2e8f0" transparent opacity={0.55} />
@@ -295,6 +317,8 @@ export function CylinderView() {
   const project = useProject((s) => s.project)!;
   const cyl = project.mode === 'cylinder';
   const R = project.workpiece.diameterMm / 2;
+  const bound = project.cad?.activeWorkpiece?.modelId;
+  const cadName = useCad((s) => (bound ? s.models[bound]?.name : undefined));
   return (
     <div className="relative h-full w-full bg-[#090b0e]" data-testid="preview-3d">
       <Canvas key={project.mode} camera={{ position: cyl ? [70, 60 + R * 2, 120 + R * 3] : [0, 160, 150], fov: 40, near: 1, far: 5000 }} dpr={[1, 2]} frameloop="always">
@@ -305,6 +329,11 @@ export function CylinderView() {
       </Canvas>
       <div className="pointer-events-none absolute top-2 left-2 text-[11px] text-muted-foreground">
         {cyl ? `Cylinder Ø${project.workpiece.diameterMm} × ${project.workpiece.lengthMm} mm` : 'Flat field'} · drag to orbit, wheel to zoom
+        {cyl && cadName && (
+          <span className="ml-1 text-sky-300" data-testid="cad-workpiece-label">
+            · CAD: {cadName}
+          </span>
+        )}
       </div>
       <Readout />
     </div>
