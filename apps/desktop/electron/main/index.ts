@@ -1,7 +1,8 @@
+import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { BrowserWindow, app, session, shell } from 'electron';
+import { BrowserWindow, app, nativeImage, session, shell } from 'electron';
 
 import { registerIpc } from './ipc';
 import { addLogSink, initLogger, log } from './logger';
@@ -15,6 +16,9 @@ const isDev = !app.isPackaged && !!devUrl;
 
 if (process.env.OLS_USER_DATA_DIR) app.setPath('userData', process.env.OLS_USER_DATA_DIR);
 
+// productName in package.json is used when packaged; set it explicitly for unpackaged runs too.
+app.setName('Open Laser Studio');
+
 // One instance only: two instances could command the same (simulated or real) machine.
 if (!app.requestSingleInstanceLock()) {
   app.quit();
@@ -22,6 +26,15 @@ if (!app.requestSingleInstanceLock()) {
 app.enableSandbox();
 
 let mainWindow: BrowserWindow | null = null;
+
+/** Source PNG used by electron-builder (`buildResources`). Packaged builds get the OS bundle icon. */
+function resolveAppIconPath(): string | null {
+  const candidates = [
+    join(app.getAppPath(), 'build/icon.png'),
+    join(here, '../../build/icon.png'),
+  ];
+  return candidates.find((p) => existsSync(p)) ?? null;
+}
 
 function csp(): string {
   const connect = isDev ? "'self' ws://localhost:* http://localhost:*" : "'self'";
@@ -47,6 +60,7 @@ function isTrustedSender(url: string): boolean {
 }
 
 function createWindow(): BrowserWindow {
+  const iconPath = !app.isPackaged ? resolveAppIconPath() : null;
   const win = new BrowserWindow({
     width: 1600,
     height: 980,
@@ -56,6 +70,7 @@ function createWindow(): BrowserWindow {
     backgroundColor: '#0b0d10',
     title: 'Open Laser Studio',
     autoHideMenuBar: true,
+    ...(iconPath ? { icon: iconPath } : {}),
     webPreferences: {
       preload: join(here, '../preload/index.cjs'),
       contextIsolation: true,
@@ -89,6 +104,15 @@ function createWindow(): BrowserWindow {
 void app.whenReady().then(() => {
   const logPath = initLogger(join(app.getPath('userData'), 'logs'));
   log('info', 'starting', { version: app.getVersion(), logPath, dev: isDev });
+
+  // macOS dock uses the .app bundle icon when packaged; in `pnpm dev` set it from build/icon.png.
+  if (!app.isPackaged && process.platform === 'darwin') {
+    const iconPath = resolveAppIconPath();
+    if (iconPath) {
+      const img = nativeImage.createFromPath(iconPath);
+      if (!img.isEmpty()) app.dock?.setIcon(img);
+    }
+  }
 
   session.defaultSession.webRequest.onHeadersReceived((details, cb) => {
     cb({ responseHeaders: { ...details.responseHeaders, 'Content-Security-Policy': [csp()] } });
