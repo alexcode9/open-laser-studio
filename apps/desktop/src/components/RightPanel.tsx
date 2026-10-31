@@ -5,10 +5,13 @@ import { LayersPanel } from '@/panels/LayersPanel';
 import { MachinePanel } from '@/panels/MachinePanel';
 import { PropertiesPanel } from '@/panels/PropertiesPanel';
 import { SetupPanel } from '@/panels/SetupPanel';
+import { useView } from '@/stores/view';
 
 export function RightPanel() {
+  const rightTab = useView((s) => s.rightTab);
+  const setRightTab = useView((s) => s.setRightTab);
   return (
-    <Tabs defaultValue="design" className="flex h-full flex-col bg-card">
+    <Tabs value={rightTab} onValueChange={(v) => setRightTab(v as typeof rightTab)} className="flex h-full flex-col bg-card">
       <TabsList>
         <TabsTrigger value="design">
           <PenTool /> Design
@@ -16,7 +19,7 @@ export function RightPanel() {
         <TabsTrigger value="machine" data-testid="tab-machine">
           <Cpu /> Machine
         </TabsTrigger>
-        <TabsTrigger value="setup">
+        <TabsTrigger value="setup" data-testid="tab-setup">
           <Settings2 /> Setup
         </TabsTrigger>
       </TabsList>

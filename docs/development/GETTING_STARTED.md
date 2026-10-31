@@ -25,6 +25,10 @@ The app opens with the sample cylinder project in **Simulation** mode. To try a 
 to **Machine → Connect → Home → Prepare → Arm**, tick the three checklist items, then press **Start**. Raise the
 simulation speed (e.g. 25×) to see the whole job quickly.
 
+To scan for a real xTool laser (read-only), open **Find device** from the top bar or Machine panel. Enable
+**Developer mode** and turn off **Simulation only** in Setup first. Selecting a device only stores its IP in the
+project profile; jobs still run on the simulator.
+
 If the native module is missing or stale, the window shows an error screen naming the expected path.
 In that case, run `pnpm build:native` again.
 

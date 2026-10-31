@@ -4,7 +4,7 @@ import { Badge, Button, Field, NumberField, Section, Select, Switch } from '@ols
 import { Radar } from 'lucide-react';
 import { useState } from 'react';
 
-import { call, errorMessage } from '@/lib/ipc';
+import { connectionLabel, useDevices } from '@/stores/devices';
 import { useProject } from '@/stores/project';
 import { useSettings } from '@/stores/settings';
 import { toast } from '@/stores/view';
@@ -58,11 +58,11 @@ export function SetupPanel() {
   const setJob = useProject((s) => s.setCylinderJob);
   const setMachine = useProject((s) => s.setMachine);
   const settings = useSettings((s) => s.settings);
+  const setDeviceOpen = useDevices((s) => s.setOpen);
   const { requestDeveloperMode, setSimulationOnly, setTheme } = useSettings.getState();
   const w = project.workpiece;
   const j = project.cylinder;
   const m = project.machine;
-  const [probe, setProbe] = useState<string | null>(null);
 
   return (
     <>
@@ -203,24 +203,16 @@ export function SetupPanel() {
           <Switch checked={settings.simulationOnly} disabled={!settings.developerMode} onCheckedChange={(c) => void setSimulationOnly(c)} />
         </Field>
         <p className="text-[10.5px] text-muted-foreground">
-          Both reset on every launch. Even with simulation-only off, this build performs read-only queries only; jobs always run on the simulator.
+          Both reset on every launch. Even with simulation-only off, this build performs read-only discovery and identify
+          only; jobs always run on the simulator.
         </p>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={!settings.developerMode || settings.simulationOnly}
-          onClick={async () => {
-            try {
-              setProbe(JSON.stringify(await call('device:probeF1'), null, 2));
-            } catch (e) {
-              setProbe(null);
-              toast('error', `F1 probe: ${errorMessage(e)}`);
-            }
-          }}
-        >
-          <Radar /> Probe F1 machine info (read-only)
+        <div className="rounded border border-border/80 bg-muted/30 px-2 py-1.5 text-[11px]">
+          Target: <span className="font-medium">{connectionLabel(m.host)}</span>
+          {m.host ? <span className="ml-1 font-mono text-muted-foreground">{m.host}</span> : null}
+        </div>
+        <Button variant="outline" size="sm" onClick={() => setDeviceOpen(true)} data-testid="find-device-setup">
+          <Radar /> Find device…
         </Button>
-        {probe && <pre className="max-h-40 overflow-auto rounded bg-muted p-2 font-mono text-[10px]">{probe}</pre>}
       </Section>
     </>
   );

@@ -504,33 +504,162 @@ impl SimSession {
     }
 }
 
-// ---------------------------------------------------------------- real device (gated)
+// ---------------------------------------------------------------- real device discovery (gated, read-only)
+
+fn gate_real_device(simulation_only: bool, developer_mode: bool) -> napi::Result<()> {
+    if simulation_only {
+        return Err(err(CoreError::Safety("simulationOnly is enabled".into())));
+    }
+    if !developer_mode {
+        return Err(err(CoreError::Safety("real-device access requires developer mode".into())));
+    }
+    Ok(())
+}
 
 #[napi(object)]
-pub struct F1ProbeOptions {
-    pub host: String,
-    pub tcp_port: u32,
-    pub http_port: u32,
+pub struct DiscoverOptions {
+    /// `"wifi"` (UDP LAN scan) or `"usb"` (gadget IP probe).
+    pub transport: String,
+    pub timeout_ms: u32,
     pub simulation_only: bool,
     pub developer_mode: bool,
 }
 
-/// Read-only `GET /device/machineInfo` against a real F1. Refused while `simulationOnly` is
-/// set or developer mode is off. Never writes G-code.
-#[napi]
-pub fn f1_probe_machine_info(opts: F1ProbeOptions) -> napi::Result<Value> {
-    if opts.simulation_only {
-        return Err(err(CoreError::Safety("simulationOnly is enabled".into())));
+#[napi(object)]
+pub struct IdentifyOptions {
+    pub host: String,
+    pub simulation_only: bool,
+    pub developer_mode: bool,
+}
+
+#[napi(object)]
+#[derive(Clone)]
+pub struct JsPortProbe {
+    pub http8080: bool,
+    pub tcp8780: bool,
+    pub tls28900: bool,
+}
+
+#[napi(object)]
+#[derive(Clone)]
+pub struct JsDiscoveredDevice {
+    pub host: String,
+    pub name: Option<String>,
+    pub model: Option<String>,
+    pub serial: Option<String>,
+    pub source: String,
+    pub family: String,
+    pub firmware: Option<String>,
+    pub ports: JsPortProbe,
+    pub machine_info: Value,
+    pub raw: Value,
+}
+
+fn family_str(f: laser_protocol::FirmwareFamily) -> String {
+    match f {
+        laser_protocol::FirmwareFamily::V1 => "v1".into(),
+        laser_protocol::FirmwareFamily::V2 => "v2".into(),
+        laser_protocol::FirmwareFamily::Unknown => "unknown".into(),
     }
-    if !opts.developer_mode {
-        return Err(err(CoreError::Safety("real-device access requires developer mode".into())));
+}
+
+fn source_str(s: laser_protocol::DeviceSource) -> String {
+    match s {
+        laser_protocol::DeviceSource::Usb => "usb".into(),
+        laser_protocol::DeviceSource::Wifi => "wifi".into(),
+        laser_protocol::DeviceSource::Manual => "manual".into(),
     }
-    let cfg = laser_protocol::f1::F1TransportConfig {
-        host: opts.host,
-        tcp_port: u16::try_from(opts.tcp_port).map_err(invalid)?,
-        http_port: u16::try_from(opts.http_port).map_err(invalid)?,
-        ..Default::default()
-    };
-    let mut t = laser_protocol::f1::F1Transport::new(cfg);
-    t.machine_info().map_err(err)
+}
+
+fn to_js_device(id: laser_protocol::DeviceIdentity) -> JsDiscoveredDevice {
+    JsDiscoveredDevice {
+        host: id.host,
+        name: id.name,
+        model: id.model,
+        serial: id.serial,
+        source: source_str(id.source),
+        family: family_str(id.family),
+        firmware: id.firmware,
+        ports: JsPortProbe {
+            http8080: id.ports.http8080,
+            tcp8780: id.ports.tcp8780,
+            tls28900: id.ports.tls28900,
+        },
+        machine_info: id.machine_info,
+        raw: id.raw,
+    }
+}
+
+pub struct DiscoverTask {
+    opts: DiscoverOptions,
+}
+
+impl Task for DiscoverTask {
+    type Output = Vec<JsDiscoveredDevice>;
+    type JsValue = Vec<JsDiscoveredDevice>;
+
+    fn compute(&mut self) -> napi::Result<Vec<JsDiscoveredDevice>> {
+        gate_real_device(self.opts.simulation_only, self.opts.developer_mode)?;
+        let timeout = std::time::Duration::from_millis(u64::from(self.opts.timeout_ms.clamp(250, 5000)));
+        let identify_cfg = laser_protocol::IdentifyConfig {
+            connect_timeout: std::time::Duration::from_millis(800),
+            ..Default::default()
+        };
+        let devices = match self.opts.transport.as_str() {
+            "usb" => laser_protocol::identify_usb(&identify_cfg),
+            "wifi" => {
+                let discover = laser_protocol::DiscoverConfig {
+                    timeout,
+                    ..Default::default()
+                };
+                laser_protocol::discover_and_identify(&discover, &identify_cfg).map_err(err)?
+            }
+            other => return Err(invalid(format!("unknown transport '{other}' (expected wifi|usb)"))),
+        };
+        Ok(devices.into_iter().map(to_js_device).collect())
+    }
+
+    fn resolve(&mut self, _env: Env, out: Vec<JsDiscoveredDevice>) -> napi::Result<Vec<JsDiscoveredDevice>> {
+        Ok(out)
+    }
+}
+
+/// UDP / USB discovery + read-only identify. Never writes G-code.
+#[napi(ts_return_type = "Promise<object[]>")]
+pub fn discover_devices(opts: DiscoverOptions, signal: Option<AbortSignal>) -> napi::Result<AsyncTask<DiscoverTask>> {
+    Ok(AsyncTask::with_optional_signal(DiscoverTask { opts }, signal))
+}
+
+pub struct IdentifyTask {
+    opts: IdentifyOptions,
+}
+
+impl Task for IdentifyTask {
+    type Output = JsDiscoveredDevice;
+    type JsValue = JsDiscoveredDevice;
+
+    fn compute(&mut self) -> napi::Result<JsDiscoveredDevice> {
+        gate_real_device(self.opts.simulation_only, self.opts.developer_mode)?;
+        let host = self.opts.host.trim();
+        if host.is_empty() {
+            return Err(invalid("host is empty"));
+        }
+        let mut id = laser_protocol::identify(host, &laser_protocol::IdentifyConfig::default()).map_err(err)?;
+        id.source = laser_protocol::DeviceSource::Manual;
+        // Preserve USB tagging when the user typed a gadget IP.
+        if matches!(laser_protocol::source_for_host(host), laser_protocol::DeviceSource::Usb) {
+            id.source = laser_protocol::DeviceSource::Usb;
+        }
+        Ok(to_js_device(id))
+    }
+
+    fn resolve(&mut self, _env: Env, out: JsDiscoveredDevice) -> napi::Result<JsDiscoveredDevice> {
+        Ok(out)
+    }
+}
+
+/// Read-only identify of a single host. Never writes G-code.
+#[napi(ts_return_type = "Promise<object>")]
+pub fn identify_device(opts: IdentifyOptions, signal: Option<AbortSignal>) -> napi::Result<AsyncTask<IdentifyTask>> {
+    Ok(AsyncTask::with_optional_signal(IdentifyTask { opts }, signal))
 }

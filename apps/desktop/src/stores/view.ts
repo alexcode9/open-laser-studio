@@ -11,9 +11,14 @@ export interface Toast {
 /** Main work area: the 2D/3D design views or the CAD inspection workspace. */
 export type Workspace = 'design' | 'cad';
 
+/** Right-hand inspector tabs. */
+export type RightTab = 'design' | 'machine' | 'setup';
+
 interface ViewState {
   workspace: Workspace;
   setWorkspace: (w: Workspace) => void;
+  rightTab: RightTab;
+  setRightTab: (t: RightTab) => void;
   tool: Tool;
   /** Pixels per millimetre. */
   zoom: number;
@@ -39,6 +44,8 @@ let toastSeq = 0;
 export const useView = create<ViewState>((set) => ({
   workspace: 'design',
   setWorkspace: (workspace) => set({ workspace }),
+  rightTab: 'design',
+  setRightTab: (rightTab) => set({ rightTab }),
   tool: 'select',
   zoom: 3,
   panX: 40,

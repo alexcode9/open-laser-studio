@@ -293,7 +293,18 @@ export const InputSchemas = {
   'machine:safetyHistory': z.void(),
   'machine:programListing': z.void(),
   'machine:setSpeed': z.object({ speed: finite.min(0).max(50) }),
-  'device:probeF1': z.void(),
+  'device:discover': z.object({
+    transport: z.enum(['wifi', 'usb']),
+    timeoutMs: z.number().int().min(250).max(5000).default(1500),
+  }),
+  /** IPv4 literal or a single-label / `.local` hostname — no URLs, no paths. */
+  'device:identify': z.object({
+    host: z
+      .string()
+      .min(1)
+      .max(255)
+      .regex(/^(?:\d{1,3}(?:\.\d{1,3}){3}|(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)(?:\.(?:local|[a-zA-Z0-9-]{1,63}))?)$/, 'invalid host'),
+  }),
   'cad:importDialog': z.object({ requestId: id, options: CadImportOptionsSchema }),
   'cad:importBytes': z.object({
     requestId: id,

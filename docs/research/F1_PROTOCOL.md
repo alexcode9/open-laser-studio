@@ -22,8 +22,17 @@ Open Laser Studio implements only the V1 transport skeleton. It must query the f
 ## 2. Addressing
 
 - USB connection presents as a USB-Ethernet adapter; device IP `201.234.3.1`. **DOCUMENTED** (BeamInk default; tested on Linux).
+- On macOS, xTool support art. 2438 cites gadget IP `201.234.4.1` for some HTTP endpoints. **DOCUMENTED** (secondary). Open Laser Studio probes both addresses on the USB tab.
 - Windows behavior of the USB network adapter: **UNKNOWN**.
 - Host and ports are configuration values in Open Laser Studio, never hardcoded in logic.
+
+## 2.1 Discovery
+
+- V1 LAN discovery: UDP port **20000**, Studio-compatible JSON probe `{ip, port, requestId}` sent to broadcast `255.255.255.255` and multicast `224.0.1.77`. **DOCUMENTED** (ha-xtool v2.5.6, citing xTool Studio).
+- Replies may be JSON (name/type/sn/ip) or a bare IP string. **DOCUMENTED** (ha-xtool parser tolerance). Exact F1 reply shape: **UNKNOWN** (not yet captured by OLS).
+- V2 devices may use a different (encrypted) multicast discovery path. **DOCUMENTED** (ha-xtool); **out of scope** for the current finder.
+- After a discovery hit (or a USB/manual host), OLS identifies read-only via `GET /device/machineInfo`, `GET /system?action=version`, and TCP connect probes on 8780 / 28900. No G-code is sent.
+- Firmware family: version `≥ 40.51.020.04` or TLS 28900-only → **V2**; HTTP 8080 / TCP 8780 answering → **V1**; else **Unknown**.
 
 ## 3. HTTP (port 8080)
 

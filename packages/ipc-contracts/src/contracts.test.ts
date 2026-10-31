@@ -46,6 +46,19 @@ describe('input validation', () => {
     expect(s.safeParse({ atS: null, kind: { type: 'axisFault', code: 'x,y=1' } }).success).toBe(false);
   });
 
+  it('device discover/identify accept LAN targets and reject junk hosts', () => {
+    expect(InputSchemas['device:discover'].safeParse({ transport: 'wifi' }).success).toBe(true);
+    expect(InputSchemas['device:discover'].safeParse({ transport: 'usb', timeoutMs: 500 }).success).toBe(true);
+    expect(InputSchemas['device:discover'].safeParse({ transport: 'ble' }).success).toBe(false);
+    expect(InputSchemas['device:discover'].safeParse({ transport: 'wifi', timeoutMs: 10 }).success).toBe(false);
+    expect(InputSchemas['device:identify'].safeParse({ host: '192.168.1.10' }).success).toBe(true);
+    expect(InputSchemas['device:identify'].safeParse({ host: '201.234.3.1' }).success).toBe(true);
+    expect(InputSchemas['device:identify'].safeParse({ host: 'laser.local' }).success).toBe(true);
+    expect(InputSchemas['device:identify'].safeParse({ host: 'http://evil' }).success).toBe(false);
+    expect(InputSchemas['device:identify'].safeParse({ host: '../etc/passwd' }).success).toBe(false);
+    expect(InputSchemas['device:identify'].safeParse({ host: '' }).success).toBe(false);
+  });
+
   it('project assets must be image data URLs', () => {
     const base = {
       schemaVersion: 1,

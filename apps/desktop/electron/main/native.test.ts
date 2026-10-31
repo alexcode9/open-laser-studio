@@ -22,8 +22,16 @@ function runUntil(s: NativeSimSession, pred: (x: SessionSnapshot) => boolean, ma
 }
 
 describe.skipIf(!available)('native core contract', () => {
-  it('reports API version 2', () => {
-    expect(native().nativeInfo().apiVersion).toBe(2);
+  it('reports API version 3', () => {
+    expect(native().nativeInfo().apiVersion).toBe(3);
+  });
+
+  it('refuses discover/identify while simulationOnly or without developer mode', async () => {
+    const n = native();
+    await expect(n.discoverDevices({ transport: 'usb', timeoutMs: 250, simulationOnly: true, developerMode: true })).rejects.toThrow(/SAFETY/);
+    await expect(n.discoverDevices({ transport: 'usb', timeoutMs: 250, simulationOnly: false, developerMode: false })).rejects.toThrow(/SAFETY/);
+    await expect(n.identifyDevice({ host: '127.0.0.1', simulationOnly: true, developerMode: true })).rejects.toThrow(/SAFETY/);
+    await expect(n.identifyDevice({ host: '127.0.0.1', simulationOnly: false, developerMode: false })).rejects.toThrow(/SAFETY/);
   });
 
   it('sample project passes the IPC schema and survives normalize + .ols roundtrip', () => {

@@ -1,10 +1,11 @@
 import { formatDeg, formatDuration } from '@ols/geometry-adapters';
 import type { InjectionKind } from '@ols/shared-types';
 import { Badge, Button, ConfirmDialog, Field, Section, Select } from '@ols/ui';
-import { Home, Pause, Play, Plug, PlugZap, RotateCcw, ShieldAlert, ShieldCheck, Square, Wrench, Zap } from 'lucide-react';
+import { Home, Pause, Play, Plug, PlugZap, Radar, RotateCcw, ShieldAlert, ShieldCheck, Square, Wrench, Zap } from 'lucide-react';
 import { useState } from 'react';
 
 import { SafetyPill } from '@/components/SafetyPill';
+import { connectionLabel, useDevices } from '@/stores/devices';
 import { useMachine } from '@/stores/machine';
 import { usePlan } from '@/stores/plan';
 import { usePlayback } from '@/stores/playback';
@@ -41,6 +42,8 @@ export function MachinePanel() {
   const speed = useMachine((s) => s.speed);
   const setSpeed = useMachine((s) => s.setSpeed);
   const mode = useProject((s) => s.project?.mode);
+  const machineHost = useProject((s) => s.project?.machine.host ?? '');
+  const setDeviceOpen = useDevices((s) => s.setOpen);
   const summary = usePlan((s) => s.result?.summary);
   const setSource = usePlayback((s) => s.setSource);
   const setFollow = usePlayback((s) => s.setFollow);
@@ -66,6 +69,18 @@ export function MachinePanel() {
   return (
     <>
       <Section title="Simulated machine" actions={<SafetyPill state={st} />}>
+        <div className="rounded border border-border/80 bg-muted/30 px-2 py-1.5 text-[11px]" data-testid="device-target">
+          <div className="flex items-center justify-between gap-2">
+            <span>
+              Target: <span className="font-medium text-foreground">{connectionLabel(machineHost)}</span>
+              {machineHost ? <span className="ml-1 font-mono text-muted-foreground">{machineHost}</span> : null}
+            </span>
+            <Button size="sm" variant="outline" onClick={() => setDeviceOpen(true)} data-testid="find-device-machine">
+              <Radar /> Find device…
+            </Button>
+          </div>
+          <p className="mt-1 text-[10.5px] text-muted-foreground">Jobs always run on the simulator. Finding a device only saves its IP for future real-hardware work.</p>
+        </div>
         <div className="flex flex-wrap gap-1">
           <Badge tone={snap.f1Connected ? 'ok' : 'muted'}>F1 (sim) {snap.f1Connected ? 'connected' : 'offline'}</Badge>
           {mode === 'cylinder' && <Badge tone={snap.axesConnected ? 'ok' : 'muted'}>A/U controller (sim) {snap.axesConnected ? 'connected' : 'offline'}</Badge>}

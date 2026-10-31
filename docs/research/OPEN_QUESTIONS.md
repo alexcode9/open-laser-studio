@@ -15,7 +15,9 @@ Status as of Milestone 1. "Experiment" refers to the planned procedure; none hav
 | 7 | Emission enable/disable? | `M3`/`M4` mode, `S` per move, `G0 S0` off | DOCUMENTED (usage) | Supervised only, after safety review |
 | 8 | Does idle guarantee marking finished? | Unknown | UNKNOWN | Compare idle reply time to motion end (camera / photodiode) |
 | 9 | TCP disconnect behavior? | Unknown; BeamInk stops defensively | UNKNOWN | Disconnect during laser-off frame |
-| 10 | USB networking Windows vs Linux? | Linux documented; Windows unknown | UNKNOWN | Check adapter + IP on Windows |
+| 10 | USB networking Windows vs Linux? | Linux `201.234.3.1`; macOS may use `201.234.4.1` (art. 2438); Windows unknown | PARTIAL | Check adapter + IP on Windows / confirm macOS gadget IP |
+| 10a | Exact F1 UDP discovery reply JSON? | Schema inferred from ha-xtool / Studio; not captured on an F1 by OLS | UNKNOWN | Wireshark on Find device → Wi-Fi |
+| 10b | Do V2 F1 units answer the V1 UDP probe? | ha-xtool mentions encrypted multicast for V2; unclear for F1 | UNKNOWN | Probe a V2 F1; out of scope until WS-V2 transport exists |
 
 ## Multi-axis capabilities
 

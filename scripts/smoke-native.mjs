@@ -49,8 +49,13 @@ for (let i = 0; i < 20000; i++) {
 const tl = s.timeline(0, 0);
 console.log('session', { state: snap.safetyState, outcome: snap.outcome, samples: tl.t.length });
 try {
-  native.f1ProbeMachineInfo({ host: '127.0.0.1', tcpPort: 8780, httpPort: 8080, simulationOnly: true, developerMode: false });
+  await native.discoverDevices({ transport: 'usb', timeoutMs: 250, simulationOnly: true, developerMode: false });
 } catch (e) {
-  console.log('real-device probe refused:', e.message);
+  console.log('real-device discover refused:', e.message);
+}
+try {
+  await native.identifyDevice({ host: '127.0.0.1', simulationOnly: true, developerMode: false });
+} catch (e) {
+  console.log('real-device identify refused:', e.message);
 }
 if (snap.outcome?.type !== 'completed') process.exit(1);

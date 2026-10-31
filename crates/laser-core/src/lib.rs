@@ -17,4 +17,4 @@ pub use profile::{
 pub use safety::{SafetyController, SafetyEvent, SafetyState, SafetyTransition};
 
 /// Version of the native API exposed to the desktop app. Bump on breaking IPC changes.
-pub const NATIVE_API_VERSION: u32 = 2;
+pub const NATIVE_API_VERSION: u32 = 3;

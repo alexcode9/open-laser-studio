@@ -191,6 +191,15 @@ impl F1Transport {
         Ok(serde_json::from_str(&r.body).unwrap_or(serde_json::json!({ "raw": r.body })))
     }
 
+    /// `GET /system?action=version` (INFERRED for the V1 REST family).
+    pub fn firmware_version(&mut self) -> Result<serde_json::Value> {
+        let r = self.http("GET", "/system?action=version")?;
+        if !(200..300).contains(&r.status) {
+            return Err(CoreError::Communication(format!("version HTTP {}", r.status)));
+        }
+        Ok(serde_json::from_str(&r.body).unwrap_or(serde_json::json!({ "raw": r.body })))
+    }
+
     /// Stop processing: `G0 S0` then `POST /processing/stop`, falling back to GET (E-003).
     /// Stopping is always permitted regardless of the write gate.
     pub fn stop_processing(&mut self) -> Result<()> {

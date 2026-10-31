@@ -423,6 +423,31 @@ export interface AppSettings {
   simSpeed: number;
 }
 
+/** Inferred from firmware version / open ports. V2 write path is not implemented. */
+export type FirmwareFamily = 'v1' | 'v2' | 'unknown';
+
+export type DeviceSource = 'usb' | 'wifi' | 'manual';
+
+export interface DevicePortProbe {
+  http8080: boolean;
+  tcp8780: boolean;
+  tls28900: boolean;
+}
+
+/** Result of a read-only LAN/USB discovery or identify pass. */
+export interface DiscoveredDevice {
+  host: string;
+  name: string | null;
+  model: string | null;
+  serial: string | null;
+  source: DeviceSource;
+  family: FirmwareFamily;
+  firmware: string | null;
+  ports: DevicePortProbe;
+  machineInfo: unknown;
+  raw: unknown;
+}
+
 export interface NativeInfo {
   apiVersion: number;
   version: string;

@@ -11,7 +11,7 @@ extraction and a hardware E-stop loop on the external axes are mandatory.
 | No laser-emission command can reach real hardware. `WriteGate.emission_validated` is hard-wired `false`. | `crates/laser-protocol/src/gate.rs` | `developer_mode_allows_laser_off_motion_only`, `developer_mode_still_refuses_emission` |
 | `simulationOnly` is on at every launch and is never persisted. | `apps/desktop/electron/main/settings.ts` | `settings.test.ts` |
 | Leaving simulation-only requires developer mode, which can only be enabled from a main-process dialog. The renderer cannot enable it. | `settings.ts`, `ipc.ts` | `settings.test.ts`, `contracts.test.ts` |
-| Real F1 connections are refused while simulation-only is on. The only real-device action is a read-only machine-info probe. | `crates/laser-devices/src/xtool_f1.rs` | unit tests |
+| Real F1 connections are refused while simulation-only is on. The only real-device actions are read-only discovery (UDP 20000) and identify (HTTP machineInfo / version + port probes). | `crates/laser-protocol/src/discovery.rs`, `crates/laser-node` | discovery unit tests + native contract gating |
 | Lines not on the F1 dialect allowlist are refused and logged as `blocked`. | `gate.rs` | unit tests |
 | The laser is permitted only in `RUNNING`. Arming requires explicit confirmation. Completing a job disarms. | `crates/laser-core/src/safety.rs` | 13 safety tests + Playwright |
 | E-stop is accepted from every state, latches, and requires confirming that the hardware has been released before reset. | `safety.rs`, UI reset dialog | Rust + Vitest native contract + Playwright |

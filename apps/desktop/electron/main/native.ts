@@ -20,7 +20,7 @@ import type {
 } from '@ols/shared-types';
 
 /** Must equal `laser_core::NATIVE_API_VERSION`. */
-export const EXPECTED_NATIVE_API_VERSION = 2;
+export const EXPECTED_NATIVE_API_VERSION = 3;
 
 /** A CAD source file stored in the .ols container (`path` = `cad/<sha256>.<ext>`). */
 export interface NativeCadFile {
@@ -68,13 +68,23 @@ export interface NativeModule {
   analyzeGcode(text: string, dialect: string): unknown;
   planToolpath(project: Project, signal?: AbortSignal): Promise<PlanResult>;
   kinematicPreview(project: Project, sampleDt: number, signal?: AbortSignal): Promise<TimelineBuffers>;
-  f1ProbeMachineInfo(opts: {
-    host: string;
-    tcpPort: number;
-    httpPort: number;
-    simulationOnly: boolean;
-    developerMode: boolean;
-  }): unknown;
+  discoverDevices(
+    opts: {
+      transport: 'wifi' | 'usb';
+      timeoutMs: number;
+      simulationOnly: boolean;
+      developerMode: boolean;
+    },
+    signal?: AbortSignal,
+  ): Promise<import('@ols/shared-types').DiscoveredDevice[]>;
+  identifyDevice(
+    opts: {
+      host: string;
+      simulationOnly: boolean;
+      developerMode: boolean;
+    },
+    signal?: AbortSignal,
+  ): Promise<import('@ols/shared-types').DiscoveredDevice>;
   SimSession: new (project: Project, config?: unknown) => NativeSimSession;
 }
 

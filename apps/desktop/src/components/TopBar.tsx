@@ -1,8 +1,9 @@
 import { Badge, Button, Separator, Tooltip, cn } from '@ols/ui';
-import { Box, Cylinder, FileDown, FilePlus2, FolderOpen, ImagePlus, OctagonX, PenTool, Redo2, Save, SaveAll, Square, Undo2, Upload } from 'lucide-react';
+import { Box, Cylinder, FileDown, FilePlus2, FolderOpen, ImagePlus, OctagonX, PenTool, Radar, Redo2, Save, SaveAll, Square, Undo2, Upload } from 'lucide-react';
 
 import { exportGcode, importImage, importSvg, newSampleProject, openProject, saveProject } from '@/lib/actions';
 import { importCadDialog } from '@/lib/cad';
+import { connectionLabel, useDevices } from '@/stores/devices';
 import { useMachine } from '@/stores/machine';
 import { useProject } from '@/stores/project';
 import { useSettings } from '@/stores/settings';
@@ -34,6 +35,8 @@ export function TopBar() {
   const settings = useSettings((s) => s.settings);
   const workspace = useView((s) => s.workspace);
   const setWorkspace = useView((s) => s.setWorkspace);
+  const machineHost = useProject((s) => s.project?.machine.host ?? '');
+  const setDeviceOpen = useDevices((s) => s.setOpen);
   const lockMode = !!snapshot && ['ARMED', 'RUNNING', 'PAUSED', 'STOPPING'].includes(snapshot.safetyState);
 
   return (
@@ -123,6 +126,14 @@ export function TopBar() {
       </div>
 
       <div className="flex-1" />
+
+      <Tooltip content="Find an xTool laser over Wi-Fi or USB (read-only). Jobs still run on the simulator.">
+        <Button size="sm" variant="outline" className="h-7 gap-1.5 px-2" data-testid="find-device" onClick={() => setDeviceOpen(true)}>
+          <Radar />
+          <span className="max-w-36 truncate text-[11px]">{connectionLabel(machineHost)}</span>
+        </Button>
+      </Tooltip>
+      <Separator vertical />
 
       <div className="flex items-center gap-1.5">
         {snapshot?.simulated !== false && (

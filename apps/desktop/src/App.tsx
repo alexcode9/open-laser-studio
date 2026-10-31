@@ -6,6 +6,7 @@ import { CadWorkspace } from './cad/CadWorkspace';
 import { ImportDialog } from './cad/ImportDialog';
 import { UseAsWorkpieceDialog } from './cad/UseAsWorkpieceDialog';
 import { BottomPanel } from './components/BottomPanel';
+import { DeviceFinderDialog } from './components/DeviceFinderDialog';
 import { RightPanel } from './components/RightPanel';
 import { StatusBar } from './components/StatusBar';
 import { Toasts } from './components/Toasts';
@@ -102,6 +103,7 @@ export function App() {
         <StatusBar />
         <ImportDialog />
         <UseAsWorkpieceDialog />
+        <DeviceFinderDialog />
         <Toasts />
       </div>
     </TooltipProvider>

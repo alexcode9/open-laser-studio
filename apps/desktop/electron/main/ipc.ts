@@ -355,15 +355,42 @@ export function registerIpc(d: IpcDeps): void {
     return { path: r.filePath };
   });
 
-  handle('device:probeF1', () => {
+  handle('device:discover', async (v) => {
+    const p = input('device:discover', v);
     const s = d.settings.get();
-    const profile = d.machine?.machineProfile;
-    return native().f1ProbeMachineInfo({
-      host: profile?.host ?? '201.234.3.1',
-      tcpPort: profile?.tcpPort ?? 8780,
-      httpPort: profile?.httpPort ?? 8080,
-      simulationOnly: s.simulationOnly,
-      developerMode: s.developerMode,
-    });
+    const signal = abortable('discover');
+    try {
+      return await native().discoverDevices(
+        {
+          transport: p.transport,
+          timeoutMs: p.timeoutMs,
+          simulationOnly: s.simulationOnly,
+          developerMode: s.developerMode,
+        },
+        signal,
+      );
+    } catch (e) {
+      if (signal.aborted) throw Object.assign(new Error('superseded by a newer request'), { code: 'ABORTED' });
+      throw e;
+    }
+  });
+
+  handle('device:identify', async (v) => {
+    const p = input('device:identify', v);
+    const s = d.settings.get();
+    const signal = abortable('identify');
+    try {
+      return await native().identifyDevice(
+        {
+          host: p.host,
+          simulationOnly: s.simulationOnly,
+          developerMode: s.developerMode,
+        },
+        signal,
+      );
+    } catch (e) {
+      if (signal.aborted) throw Object.assign(new Error('superseded by a newer request'), { code: 'ABORTED' });
+      throw e;
+    }
   });
 }

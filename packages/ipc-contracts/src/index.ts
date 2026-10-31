@@ -2,6 +2,7 @@ import type {
   AppInfo,
   AppSettings,
   CadAlignResult,
+  DiscoveredDevice,
   CadMeasurement,
   CadModelData,
   CadProgress,
@@ -80,7 +81,8 @@ export interface Outputs {
   'machine:safetyHistory': SafetyTransition[];
   'machine:programListing': string[];
   'machine:setSpeed': { speed: number };
-  'device:probeF1': unknown;
+  'device:discover': DiscoveredDevice[];
+  'device:identify': DiscoveredDevice;
   'cad:importDialog': CadModelData | null;
   'cad:importBytes': CadModelData;
   'cad:cancel': { cancelled: boolean };

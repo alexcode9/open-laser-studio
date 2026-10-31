@@ -5,6 +5,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 ## [Unreleased] — Milestone 1
 
 ### Added
+- Find device dialog (USB / Wi-Fi / manual IP): V1 UDP discovery on port 20000, USB gadget probe (`201.234.3.1` / `201.234.4.1`), read-only identify, and saving the chosen host into the machine profile. Jobs remain simulated; access stays gated behind developer mode + simulation-only off. Native API version 3.
 - CAD Inspection workspace: STEP/STL/3MF import in an isolated Open CASCADE kernel (`utilityProcess`), B-Rep measurements with quality tags, section planes, mesh cylinder fitting, assembly isolate, measurement report export, and Use as Workpiece (Rust `modelToWorkpiece`). Schema v2 `.ols` files embed CAD sources under `cad/<sha256>.<ext>`.
 - Research documents for the xTool F1 protocol with confidence-tagged evidence.
 - pnpm + Cargo monorepo: Electron/React desktop app and Rust core crates.

@@ -73,3 +73,16 @@ No entries in this file are VERIFIED. Open Laser Studio has not yet been connect
 - **Exact:** `G91 G1 Z10 F600 S0` forwarded; "The F1 simply ignores that command"
 - **Confidence:** DOCUMENTED (single user report)
 - **Validate:** send with laser off, confirm reply and no motion.
+
+### E-012 V1 UDP discovery (port 20000)
+- **Source:** ha-xtool v2.5.6 release notes / discover-worker (Studio-compatible wire shape)
+- **Exact:** UDP probe JSON `{"ip":"<local>","port":20000,"requestId":"..."}` to `255.255.255.255:20000` and multicast `224.0.1.77:20000`. Replies may be JSON or a bare IP string.
+- **Device/Firmware:** V1 REST family generally; F1-specific reply shape not captured by OLS
+- **Confidence:** DOCUMENTED (secondary)
+- **Validate:** run OLS Find device → Wi-Fi on a LAN with a V1 F1; capture request/response with Wireshark.
+
+### E-013 USB gadget IP on macOS
+- **Source:** xTool support article 2438 (Wi-Fi connection failure troubleshooting)
+- **Exact:** macOS example URL `http://201.234.4.1:8080/net?action=getssid` (Windows uses `201.234.3.1`)
+- **Confidence:** DOCUMENTED (secondary)
+- **Validate:** plug F1 into a Mac via USB; confirm which of `201.234.3.1` / `201.234.4.1` answers `GET /device/machineInfo`.
